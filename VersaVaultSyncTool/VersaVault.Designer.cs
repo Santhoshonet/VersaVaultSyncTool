@@ -45,6 +45,7 @@
             this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripSeparator();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this._watchFolder = new System.IO.FileSystemWatcher();
+            this.timer_status_update = new System.Windows.Forms.Timer(this.components);
             this.PnlAuthentication.SuspendLayout();
             this.contextMenuStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this._watchFolder)).BeginInit();
@@ -92,6 +93,7 @@
             this.TxtPassword.PasswordChar = '*';
             this.TxtPassword.Size = new System.Drawing.Size(363, 21);
             this.TxtPassword.TabIndex = 3;
+            this.TxtPassword.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPassword_KeyPress);
             // 
             // label2
             // 
@@ -185,6 +187,12 @@
             this._watchFolder.EnableRaisingEvents = true;
             this._watchFolder.SynchronizingObject = this;
             // 
+            // timer_status_update
+            // 
+            this.timer_status_update.Enabled = true;
+            this.timer_status_update.Interval = 10000;
+            this.timer_status_update.Tick += new System.EventHandler(this.timer_status_update_Tick);
+            // 
             // VersaVault
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -200,6 +208,7 @@
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "VersaVault";
+            this.TopMost = true;
             this.Load += new System.EventHandler(this.VersaVault_Load);
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.VersaVault_FormClosed);
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.VersaVault_FormClosing);
@@ -228,5 +237,6 @@
         private System.Windows.Forms.ToolStripSeparator toolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
         private System.Windows.Forms.Label LblError;
+        private System.Windows.Forms.Timer timer_status_update;
     }
 }
