@@ -13,28 +13,45 @@ namespace VersaVaultSyncTool
         static extern bool SetForegroundWindow(IntPtr hWnd);
 
         [STAThread]
-        static void Main()
+        static void Main(string[] args)
         {
-            bool isthisNewApp = true;
-            using (var mutex = new Mutex(true, "VersaVault", out isthisNewApp))
+            if (args.Length == 0)
             {
-                if (isthisNewApp)
+                bool isthisNewApp = true;
+                using (var mutex = new Mutex(true, "VersaVault", out isthisNewApp))
                 {
-                    Application.EnableVisualStyles();
-                    Application.SetCompatibleTextRenderingDefault(false);
-                    Application.Run(new VersaVault());
-                }
-                else
-                {
-                    var current = Process.GetCurrentProcess();
-                    foreach (var process in Process.GetProcessesByName(current.ProcessName))
+                    if (isthisNewApp)
                     {
-                        if (process.Id == current.Id)
+                        Application.EnableVisualStyles();
+                        Application.SetCompatibleTextRenderingDefault(false);
+                        Application.Run(new VersaVault());
+                    }
+                    else
+                    {
+                        var current = Process.GetCurrentProcess();
+                        foreach (var process in Process.GetProcessesByName(current.ProcessName))
                         {
-                            SetForegroundWindow(process.MainWindowHandle);
-                            break;
+                            if (process.Id == current.Id)
+                            {
+                                SetForegroundWindow(process.MainWindowHandle);
+                                break;
+                            }
                         }
                     }
+                }
+            }
+            else if (args[0].ToLower().Trim() == "remove_config")
+            {
+                try
+                {
+                    Utilities.MyConfig.Username = string.Empty;
+                    Utilities.MyConfig.Password = string.Empty;
+                    Utilities.MyConfig.BucketKey = string.Empty;
+                    Utilities.MyConfig.Save();
+                }
+                catch (Exception)
+                {
+                    return;
                 }
             }
         }

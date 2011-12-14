@@ -1,76 +1,113 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Net;
+using System.Net.Cache;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
+using Amazon;
+using Amazon.S3;
+using Amazon.S3.Model;
 using LitS3;
 using Newtonsoft.Json;
+using CopyObjectRequest = LitS3.CopyObjectRequest;
+using DeleteObjectRequest = LitS3.DeleteObjectRequest;
 
 namespace VersaVaultSyncTool
 {
     public partial class VersaVault : Form
     {
-        S3Service service;
+        readonly DropShadow _ds = new DropShadow();
 
-        private string SyncStatus = string.Empty;
+        S3Service _service;
+
+        private AmazonS3 _amazons3;
+
+        private readonly Queue _syncStatus = new Queue();
+
+        private readonly Queue _applicationUpates = new Queue();
+
+        private readonly List<string> _syncStatusDictionary = new List<string>();
+
+        private bool _isThreadStarted;
+
+        private readonly Hashtable _fileQueue = new Hashtable();
 
         private bool _syncIsPaused;
 
-        private bool _isStartedMonitoring = false;
+        private bool _isStartedMonitoring;
 
-        private List<string> download_objects;
+        private List<string> _downloadObjects;
 
         public VersaVault()
         {
             InitializeComponent();
+            Shown += VersaVaultShown;
+            Resize += VersaVaultResize;
+            LocationChanged += VersaVaultResize;
         }
 
-        private void BtnAuthenticate_Click(object sender, EventArgs e)
+        private void VersaVaultShown(object sender, EventArgs e)
         {
-            getBucketId();
+            Rectangle rc = Bounds;
+            rc.Inflate(10, 10);
+            _ds.Bounds = rc;
+            BringToFront();
         }
 
-        private void getBucketId()
+        private void VersaVaultResize(object sender, EventArgs e)
         {
-            this.Visible = false;
-            this.Opacity = 0;
-            Application.DoEvents();
-            string url = string.Empty;
-            if (Utilities.DevelopmentMode)
-                url = "http://localhost:3000";
-            else
-                url = "http://versavault.com";
-            url += "/get_amazon_bucket_id?username=" + TxtUsername.Text.Trim() + "&password=" + TxtPassword.Text.Trim();
-            BtnAuthenticate.Enabled = false;
-            BtnAuthenticate.Text = "Please Wait ...";
+            //_ds.Visible = (WindowState == FormWindowState.Normal);
+            _ds.Visible = Visible;
+            if (_ds.Visible)
+            {
+                Rectangle rc = Bounds;
+                rc.Inflate(10, 10);
+                _ds.Bounds = rc;
+            }
+            BringToFront();
+        }
+
+        private void BtnAuthenticateClick(object sender, EventArgs e)
+        {
+            GetBucketId();
+        }
+
+        private void GetBucketId()
+        {
+            HideForm();
+            string url = Utilities.DevelopmentMode ? "http://localhost:3000" : "http://versavault.com";
+            url += "/api/get_amazon_bucket_id?username=" + TxtUsername.Text.Trim() + "&password=" + TxtPassword.Text.Trim();
             startSyncToolStripMenuItem.Text = "Start sync";
             Utilities.MyConfig.BucketKey = string.Empty;
             Utilities.MyConfig.Username = TxtUsername.Text.Trim();
             Utilities.MyConfig.Password = TxtPassword.Text.Trim();
             Utilities.MyConfig.Save();
             _syncIsPaused = true;
-            string result = GetResponse(url).ToString();
-            if (result != null && result != string.Empty)
+            string result = GetResponse(url);
+            if (!string.IsNullOrEmpty(result))
             {
-                var res = JsonConvert.DeserializeObject<account>(result);
-                if (res.bucket_id != null)
+                var res = JsonConvert.DeserializeObject<Account>(result);
+                if (res.BucketId != null)
                 {
-                    Utilities.MyConfig.BucketKey = res.bucket_id;
+                    Utilities.MyConfig.BucketKey = res.BucketId;
+                    if (string.IsNullOrEmpty(Utilities.MyConfig.MachineKey))
+                        Utilities.MyConfig.MachineKey = Guid.NewGuid().ToString();
                     Utilities.MyConfig.Save();
-                    startSync();
+                    StartSync();
                     return;
                 }
-                else
-                {
-                    LblError.Text = res.error;
-                }
+                LblError.Text = res.Error;
             }
-            BtnAuthenticate.Enabled = true;
-            BtnAuthenticate.Text = "Authenticate";
-            PnlAuthentication.Visible = true;
-            stopSync();
+            else
+            {
+                LblError.Text = "Unable to connect to VersaVault." + Environment.NewLine + "Check your internet connection and try again.";
+            }
+            StopSync();
         }
 
         private string GetResponse(string strUrl)
@@ -83,6 +120,8 @@ namespace VersaVaultSyncTool
             try
             {
                 objRequest = (HttpWebRequest)WebRequest.Create(strUrl);
+                var policy = new HttpRequestCachePolicy(HttpRequestCacheLevel.BypassCache);
+                objRequest.CachePolicy = policy;
                 ar = objRequest.BeginGetResponse(GetScrapingResponse, objRequest);
                 //// Wait for request to complete
                 ar.AsyncWaitHandle.WaitOne(1000 * 60, true);
@@ -113,19 +152,24 @@ namespace VersaVaultSyncTool
         {
         }
 
-        private void VersaVault_Load(object sender, EventArgs e)
+        private void VersaVaultLoad(object sender, EventArgs e)
         {
             try
             {
-                service = new LitS3.S3Service();
-                service.AccessKeyID = Utilities.AwsAccessKey;
-                service.SecretAccessKey = Utilities.AwsSecretKey;
-                service.UseSubdomains = true;
+                CheckForIllegalCrossThreadCalls = false;
+                _service = new S3Service
+                               {
+                                   AccessKeyID = Utilities.AwsAccessKey,
+                                   SecretAccessKey = Utilities.AwsSecretKey,
+                                   UseSubdomains = true
+                               };
 
-                service.AddObjectProgress += new EventHandler<S3ProgressEventArgs>(service_AddObjectProgress);
-                service.GetObjectProgress += new EventHandler<S3ProgressEventArgs>(service_GetObjectProgress);
+                _amazons3 = AWSClientFactory.CreateAmazonS3Client(Utilities.AwsAccessKey, Utilities.AwsSecretKey, new AmazonS3Config() { CommunicationProtocol = Protocol.HTTP });
 
-                download_objects = new List<string>();
+                _service.AddObjectProgress += ServiceAddObjectProgress;
+                _service.GetObjectProgress += ServiceGetObjectProgress;
+
+                _downloadObjects = new List<string>();
 
                 if (!Directory.Exists(Utilities.Path))
                     Directory.CreateDirectory(Utilities.Path);
@@ -138,17 +182,14 @@ namespace VersaVaultSyncTool
 
                 if (!string.IsNullOrEmpty(TxtUsername.Text) || !string.IsNullOrEmpty(TxtPassword.Text.Trim()))
                 {
-                    getBucketId();
+                    GetBucketId();
                     if (string.IsNullOrEmpty(Utilities.MyConfig.BucketKey))
-                        stopSync();
+                        StopSync();
                     else
-                        startSync();
+                        StartSync();
                 }
                 else
-                {
-                    this.Visible = true;
-                    this.Opacity = 1;
-                }
+                    ShowForm();
             }
             catch (Exception)
             {
@@ -156,24 +197,42 @@ namespace VersaVaultSyncTool
             }
         }
 
-        private void startSync()
+        private void StartSync()
         {
+            EnableVersioning();
             _syncIsPaused = false;
             LblError.Text = "Authenticated successfully.";
-            BtnAuthenticate.Enabled = true;
-            BtnAuthenticate.Text = "Authenticate";
+            ShowBalloon("Started versavault synchronization process");
             StartActivityMonitoring(Utilities.Path);
             startSyncToolStripMenuItem.Text = "Pause Sync";
-            this.Visible = false;
-            this.Opacity = 0;
+            Visible = false;
+            Opacity = 0;
         }
 
-        private void stopSync()
+        private void EnableVersioning()
+        {
+            try
+            {
+                var setBucketVersioningRequest = new SetBucketVersioningRequest { BucketName = Utilities.MyConfig.BucketKey };
+                var versionConfig = new S3BucketVersioningConfig() { Status = "Enabled" };
+                setBucketVersioningRequest.VersioningConfig = versionConfig;
+                var response = _amazons3.SetBucketVersioning(setBucketVersioningRequest);
+                if (string.IsNullOrEmpty(response.AmazonId2))
+                {
+                }
+            }
+            catch (Exception)
+            {
+                // ToDo
+                // need to handle log here
+            }
+        }
+
+        private void StopSync()
         {
             _syncIsPaused = true;
             startSyncToolStripMenuItem.Text = "Start Sync";
-            this.Visible = true;
-            this.Opacity = 1;
+            ShowForm();
         }
 
         private void StartActivityMonitoring(string sPath)
@@ -193,7 +252,7 @@ namespace VersaVaultSyncTool
                 _watchFolder.Created += EventRaised;
                 _watchFolder.Deleted += EventRaised;
                 _watchFolder.Renamed += EventRaised;
-                _watchFolder.Error += new ErrorEventHandler(_watchFolder_Error);
+                _watchFolder.Error += WatchFolderError;
                 try
                 {
                     _watchFolder.EnableRaisingEvents = true;
@@ -207,75 +266,69 @@ namespace VersaVaultSyncTool
             }
         }
 
-        void _watchFolder_Error(object sender, ErrorEventArgs e)
+        private static void WatchFolderError(object sender, ErrorEventArgs e)
         {
         }
 
-        private void VersaVault_FormClosing(object sender, FormClosingEventArgs e)
+        private void VersaVaultFormClosing(object sender, FormClosingEventArgs e)
         {
             e.Cancel = true;
-            this.Opacity = 0;
+            Opacity = 0;
             if (string.IsNullOrEmpty(Utilities.MyConfig.BucketKey))
                 startSyncToolStripMenuItem.Text = "Start sync";
             Application.DoEvents();
         }
 
-        private void VersaVault_FormClosed(object sender, FormClosedEventArgs e)
+        private void VersaVaultFormClosed(object sender, FormClosedEventArgs e)
         {
         }
 
-        private void startToolStripMenuItem_Click(object sender, EventArgs e)
+        private void StartToolStripMenuItemClick(object sender, EventArgs e)
         {
             Utilities.Startup(startToolStripMenuItem.CheckState == CheckState.Checked, Application.ExecutablePath);
         }
 
-        private void settingsToolStripMenuItem_Click(object sender, EventArgs e)
+        private void SettingsToolStripMenuItemClick(object sender, EventArgs e)
         {
-            PnlAuthentication.Visible = true;
-            this.Opacity = 1;
-            this.Visible = true;
-            Application.DoEvents();
+            ShowForm();
         }
 
-        private void startSyncToolStripMenuItem_Click(object sender, EventArgs e)
+        private void StartSyncToolStripMenuItemClick(object sender, EventArgs e)
         {
             if (string.IsNullOrEmpty(Utilities.MyConfig.BucketKey))
-            {
-                PnlAuthentication.Visible = true;
-                this.Visible = true;
-                this.Opacity = 1;
-            }
+                ShowForm();
         }
 
-        private void VersaVaultNotifications_Click(object sender, EventArgs e)
+        private static void VersaVaultNotificationsClick(object sender, EventArgs e)
         {
             Process.Start("explorer.exe", Utilities.Path);
         }
 
-        private void VersaVaultNotifications_DoubleClick(object sender, EventArgs e)
+        private void VersaVaultNotificationsDoubleClick(object sender, EventArgs e)
         {
             Process.Start("explorer.exe", Utilities.Path);
         }
 
-        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        private void ExitToolStripMenuItemClick(object sender, EventArgs e)
         {
             try
             {
-                this.Close();
-                this.Dispose();
+                Close();
+                Dispose();
                 VersaVaultNotifications.Dispose();
             }
             catch (Exception)
             {
+                return;
             }
         }
 
-        private void showBalloon(string text, string title, ToolTipIcon icon)
+        private void ShowBalloon(string text)
         {
-            VersaVaultNotifications.ShowBalloonTip(2000, title, text, icon);
+            _syncStatus.Enqueue(text);
         }
 
-        private bool IsFileUsedbyAnotherProcess(string filename)
+        private static bool IsFileUsedbyAnotherProcess(string filename)
         {
             // Its not a way elegant way, need to find out the better  code
             try
@@ -286,39 +339,35 @@ namespace VersaVaultSyncTool
                     filestream.Dispose();
                 }
             }
-            catch (System.IO.IOException exp)
+            catch (IOException)
             {
                 return true;
             }
             return false;
         }
 
-        private void Uploadfiles(string folder_path)
+        private void Uploadfiles(string folderPath)
         {
-            foreach (string file_path in Directory.GetFiles(folder_path))
-            {
-                Addobject(file_path);
-            }
-            foreach (string path in Directory.GetDirectories(folder_path))
-            {
-                Createfolder(path);
+            Createfolder(folderPath);
+            foreach (string filePath in Directory.GetFiles(folderPath))
+                Addobject(filePath);
+            foreach (string path in Directory.GetDirectories(folderPath))
                 Uploadfiles(path);
-            }
         }
 
-        private void Modifyfolder(string new_path, string old_path)
+        private void Modifyfolder(string newPath, string oldPath)
         {
-            Createfolder(new_path);
-            foreach (string filename in Directory.GetFiles(new_path))
+            Createfolder(newPath);
+            foreach (string filename in Directory.GetFiles(newPath))
             {
-                Moveobject(filename, old_path);
+                Moveobject(filename, oldPath);
             }
-            foreach (string directory_name in Directory.GetDirectories(new_path))
+            foreach (string directoryName in Directory.GetDirectories(newPath))
             {
-                Modifyfolder(directory_name, old_path + "\\" + Path.GetFileName(directory_name));
-                Removefolder(old_path + "\\" + Path.GetFileName(directory_name));
+                Modifyfolder(directoryName, oldPath + "\\" + new DirectoryInfo(directoryName).Name);
+                Removefolder(oldPath + "\\" + new DirectoryInfo(directoryName).Name);
             }
-            Removefolder(old_path);
+            Removefolder(oldPath);
         }
 
         private void Createfolder(string path)
@@ -326,118 +375,187 @@ namespace VersaVaultSyncTool
             try
             {
                 string relativePath = path.Replace(Utilities.Path + "\\", "");
-                var addobjectrequest = new AddObjectRequest(service, Utilities.MyConfig.BucketKey, relativePath + "/");
-                addobjectrequest.ContentLength = 0;
-                var resutl = addobjectrequest.GetResponse();
+                var addobjectrequest = new AddObjectRequest(_service, Utilities.MyConfig.BucketKey, relativePath + "/") { ContentLength = 0 };
+                addobjectrequest.GetResponse();
+                ShowBalloon("Creating folder - " + relativePath);
+                _applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new DirectoryInfo(path).LastWriteTime, Status = UpdateStatus.Update });
             }
-            catch (Exception) { }
+            catch (Exception)
+            {
+                return;
+            }
         }
 
         private void Removefolder(string path)
         {
-            // If the user deleted a folder, it will be an exception
-            string oldrelativePath = path.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
             try
             {
-                var removeobject = new LitS3.DeleteObjectRequest(service, Utilities.MyConfig.BucketKey, oldrelativePath + "/");
-                var result = removeobject.GetResponse();
+                // If the user deleted a folder, it will be an exception
+                string oldrelativePath = path.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
+                var removeobject = new DeleteObjectRequest(_service, Utilities.MyConfig.BucketKey, oldrelativePath + "/");
+                removeobject.GetResponse();
+                _applicationUpates.Enqueue(new AppUpdateInfo { Key = oldrelativePath.Replace("\\", "/"), LastModifiedTime = DateTime.Now, Status = UpdateStatus.Delete });
             }
             catch (Exception) { }
         }
 
-        private void Moveobject(string new_path, string old_path)
+        private void Moveobject(string newPath, string oldPath)
         {
             try
             {
-                if (!IsFileUsedbyAnotherProcess(new_path))
+                if (!IsFileUsedbyAnotherProcess(newPath))
                 {
-                    string newrelativePath = new_path.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
-                    string oldrelativePath = old_path.Replace(Utilities.Path + "\\", "").Replace("\\", "/");  // +"/" + Path.GetFileName(new_path);
-                    if (service.ObjectExists(Utilities.MyConfig.BucketKey, oldrelativePath))
+                    string newrelativePath = newPath.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
+                    string oldrelativePath = oldPath.Replace(Utilities.Path + "\\", "").Replace("\\", "/");  // +"/" + Path.GetFileName(new_path);
+                    if (_service.ObjectExists(Utilities.MyConfig.BucketKey, oldrelativePath))
                     {
-                        LitS3.CopyObjectRequest request = new CopyObjectRequest(service, Utilities.MyConfig.BucketKey, oldrelativePath, newrelativePath);
-                        LitS3.CopyObjectResponse response = request.GetResponse();
+                        var request = new CopyObjectRequest(_service, Utilities.MyConfig.BucketKey, oldrelativePath, newrelativePath);
+                        var response = request.GetResponse();
                         if (response.Error == null)
                         {
-                            service.DeleteObject(Utilities.MyConfig.BucketKey, oldrelativePath);
+                            _service.DeleteObject(Utilities.MyConfig.BucketKey, oldrelativePath);
                         }
+                        _applicationUpates.Enqueue(new AppUpdateInfo { Key = oldrelativePath.Replace("\\", "/"), LastModifiedTime = DateTime.Now, Status = UpdateStatus.Delete });
+                        _applicationUpates.Enqueue(new AppUpdateInfo { Key = newrelativePath.Replace("\\", "/"), LastModifiedTime = DateTime.Now, Status = UpdateStatus.Update });
                     }
                     else
                     {
-                        if (File.Exists(new_path))
-                            Addobject(new_path);
+                        if (File.Exists(newPath))
+                            Addobject(newPath);
                     }
                 }
             }
-            catch (Exception) { }
+            catch (Exception)
+            {
+                return;
+            }
         }
 
-        private void Addobject(string file_path)
+        private void Addobject(string filePath)
         {
             try
             {
-                var attribute = System.IO.File.GetAttributes(file_path);
-                string relativePath = file_path.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
-                if (attribute != FileAttributes.Directory && attribute != FileAttributes.Temporary)
+                var attribute = File.GetAttributes(filePath);
+                string relativePath = filePath.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
+                if (attribute != FileAttributes.Directory && attribute != (FileAttributes.Archive | FileAttributes.Hidden))
                 {
-                    if (File.Exists(file_path) && !IsFileUsedbyAnotherProcess(file_path))
+                    if (File.Exists(filePath) && !IsFileUsedbyAnotherProcess(filePath))
                     {
-                        service.AddObject(file_path, Utilities.MyConfig.BucketKey, relativePath);
-                        update_application(relativePath);
+                        _service.AddObject(filePath, Utilities.MyConfig.BucketKey, relativePath);
+                        SetAcltoObject(relativePath);
+                        _applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(filePath).LastWriteTime, Status = UpdateStatus.Update });
                     }
                 }
             }
-            catch (Exception) { }
+            catch (Exception)
+            {
+                return;
+            }
         }
 
-        private void service_AddObjectProgress(object sender, S3ProgressEventArgs e)
+        private void SetAcltoObject(string key)
         {
-            modify_sync_status("Uploaded", e.BytesTransferred, e.BytesTotal, e.Key);
+            try
+            {
+                var versionsRequest = new ListVersionsRequest
+                                          {
+                                              BucketName = Utilities.MyConfig.BucketKey,
+                                              Prefix = key
+                                          };
+                var result = _amazons3.ListVersions(versionsRequest);
+                foreach (S3ObjectVersion s3ObjectVersion in result.Versions)
+                {
+                    if (!s3ObjectVersion.IsDeleteMarker)
+                    {
+                        try
+                        {
+                            // Get ACL.
+                            var getRequest = new GetACLRequest { BucketName = Utilities.MyConfig.BucketKey, Key = key, VersionId = s3ObjectVersion.VersionId };
+                            GetACLResponse getResponse = _amazons3.GetACL(getRequest);
+                            if (getResponse.AccessControlList.Grants.Count < 2)
+                            {
+                                S3AccessControlList acl = getResponse.AccessControlList;
+                                getResponse.Dispose();
+                                //acl.Grants.Clear();
+                                //var grantee0 = new S3Grantee();
+                                //grantee0.WithCanonicalUser(acl.Owner.Id, acl.Owner.DisplayName);
+                                //acl.AddGrant(grantee0, S3Permission.FULL_CONTROL);
+                                var grantee1 = new S3Grantee();
+                                grantee1.WithURI("http://acs.amazonaws.com/groups/global/AllUsers");
+                                acl.AddGrant(grantee1, S3Permission.READ);
+                                var request = new SetACLRequest
+                                                  {
+                                                      BucketName = Utilities.MyConfig.BucketKey,
+                                                      ACL = acl,
+                                                      Key = key,
+                                                      VersionId = s3ObjectVersion.VersionId
+                                                  };
+                                SetACLResponse response = _amazons3.SetACL(request);
+                                response.Dispose();
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            // Todo
+                        }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+            }
         }
 
-        void service_GetObjectProgress(object sender, S3ProgressEventArgs e)
+        private void ServiceAddObjectProgress(object sender, S3ProgressEventArgs e)
         {
-            modify_sync_status("Downloaded", e.BytesTransferred, e.BytesTotal, e.Key);
+            ModifySyncStatus("Uploaded", e.BytesTransferred, e.BytesTotal, e.Key);
         }
 
-        private void modify_sync_status(string status, long BytesTransferred, long BytesTotal, string key)
+        private void ServiceGetObjectProgress(object sender, S3ProgressEventArgs e)
         {
-            if (BytesTransferred != BytesTotal)
-                SyncStatus = status + " " + Math.Round(Convert.ToDouble(BytesTransferred / 1048576), 2) + "MB out of  " + Math.Round(Convert.ToDouble(BytesTotal / 1048576), 2) + "MB - " + key;
-            else
-                SyncStatus = status + " " + key;
-            Application.DoEvents();
+            ModifySyncStatus("Downloaded", e.BytesTransferred, e.BytesTotal, e.Key);
         }
 
-        private void Removeobject(string file_path)
+        private void Removeobject(string filePath)
         {
             // Dont know it is folder or file, so try with the file first
             try
             {
-                string relativePath = file_path.Replace(Utilities.Path + "\\", "");
-                //if (service.ObjectExists(Utilities.MyConfig.BucketKey, relativePath))
-                service.DeleteObject(Utilities.MyConfig.BucketKey, relativePath);
+                string relativePath = filePath.Replace(Utilities.Path + "\\", "");
+                if (_service.ObjectExists(Utilities.MyConfig.BucketKey, relativePath))
+                {
+                    _service.DeleteObject(Utilities.MyConfig.BucketKey, relativePath);
+                    _applicationUpates.Enqueue(new AppUpdateInfo
+                                                   {
+                                                       Key = relativePath.Replace("\\", "/"),
+                                                       LastModifiedTime = DateTime.Now,
+                                                       Status = UpdateStatus.Delete
+                                                   });
+                }
             }
-            catch (Exception) { }
+            catch (Exception)
+            {
+                return;
+            }
         }
 
-        private void Deletefolder(string relative_path)
+        private void Deletefolder(string relativePath)
         {
             // Iteration through all the files in the folder
             try
             {
-                foreach (var result_entry in service.ListAllObjects(Utilities.MyConfig.BucketKey, relative_path))
+                foreach (var resultEntry in _service.ListAllObjects(Utilities.MyConfig.BucketKey, relativePath))
                 {
                     ObjectEntry entry = null;
                     try
                     {
-                        entry = (ObjectEntry)result_entry;
+                        entry = (ObjectEntry)resultEntry;
                     }
                     catch (Exception)
                     {
                         try
                         {
-                            var prefix = (CommonPrefix)result_entry;
+                            var prefix = (CommonPrefix)resultEntry;
                             Deletefolder(prefix.Prefix);
                         }
                         catch (Exception) { }
@@ -446,36 +564,49 @@ namespace VersaVaultSyncTool
                     {
                         try
                         {
-                            var removeobject = new LitS3.DeleteObjectRequest(service, Utilities.MyConfig.BucketKey, entry.Key);
-                            var result = removeobject.GetResponse();
+                            var removeobject = new DeleteObjectRequest(_service, Utilities.MyConfig.BucketKey, entry.Key);
+                            removeobject.GetResponse();
                         }
                         catch (Exception)
                         {
                             try
                             {
-                                var removeobject = new LitS3.DeleteObjectRequest(service, Utilities.MyConfig.BucketKey, entry.Name);
-                                var result = removeobject.GetResponse();
+                                var removeobject = new DeleteObjectRequest(_service, Utilities.MyConfig.BucketKey, entry.Name);
+                                removeobject.GetResponse();
                             }
                             catch (Exception) { }
                         }
                     }
                 }
             }
-            catch (Exception) { }
+            catch (Exception)
+            {
+                // Todo
+                // need to hanlde something when error raises
+            }
+            finally
+            {
+                // deleting entire folder
+                _applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = DateTime.Now, Status = UpdateStatus.Delete });
+            }
 
             // If the user deleted a folder, it will be an exception
             try
             {
-                var removeobject = new LitS3.DeleteObjectRequest(service, Utilities.MyConfig.BucketKey, relative_path);
-                var result = removeobject.GetResponse();
+                var attribute = File.GetAttributes(Path.Combine(Utilities.Path, relativePath));
+                var removeobject = new DeleteObjectRequest(_service, Utilities.MyConfig.BucketKey, relativePath);
+                removeobject.GetResponse();
             }
-            catch (Exception) { }
+            catch (Exception)
+            {
+                return;
+            }
         }
 
-        private void TxtPassword_KeyPress(object sender, KeyPressEventArgs e)
+        private void TxtPasswordKeyPress(object sender, KeyPressEventArgs e)
         {
             if (e.KeyChar == 13)
-                getBucketId();
+                GetBucketId();
         }
 
         private void EventRaised(object sender, FileSystemEventArgs e)
@@ -483,97 +614,16 @@ namespace VersaVaultSyncTool
             if (!_syncIsPaused)
             {
                 _syncIsPaused = true;
-                switch (e.ChangeType)
-                {
-                    case WatcherChangeTypes.Changed: // some how we have to avoid unncessary uploads
-                        {
-                            try
-                            {
-                                if (!download_objects.Contains(e.FullPath))
-                                {
-                                    var attribute = System.IO.File.GetAttributes(e.FullPath);
-                                    if (attribute != FileAttributes.Directory && attribute != FileAttributes.Temporary)
-                                    {
-                                        showBalloon("Uploading file content......", "File Update.", ToolTipIcon.Info);
-                                        Addobject(e.FullPath);
-                                    }
-                                }
-                            }
-                            catch (Exception) { }
-                            break;
-                        }
-                    case WatcherChangeTypes.Created:
-                        {
-                            try
-                            {
-                                if (!download_objects.Contains(e.FullPath))
-                                {
-                                    var attribute = System.IO.File.GetAttributes(e.FullPath);
-                                    if (attribute != FileAttributes.Directory && attribute != FileAttributes.Temporary)
-                                    {
-                                        showBalloon("Uploading file content......", "New file.", ToolTipIcon.Info);
-                                        Addobject(e.FullPath);
-                                    }
-                                    else
-                                    {
-                                        // Creating an Folder
-                                        showBalloon("Creating a folder......", "New folder.", ToolTipIcon.Info);
-                                        Createfolder(e.FullPath);
-                                        // If it is restored from the recylebin / pasted from another location then upload folder structure completely
-                                        Uploadfiles(e.FullPath);
-                                    }
-                                }
-                            }
-                            catch (Exception) { }
-                            break;
-                        }
-                    case WatcherChangeTypes.Deleted:
-                        {
-                            string relativePath = e.FullPath.Replace(Utilities.Path + "\\", "");
-                            try
-                            {
-                                var attribute = System.IO.File.GetAttributes(e.FullPath);
-                                if (attribute != FileAttributes.Directory && attribute != FileAttributes.Temporary)
-                                {
-                                    showBalloon("Deleting a file......", "File delete.", ToolTipIcon.Info);
-                                    service.DeleteObject(Utilities.MyConfig.BucketKey, relativePath);
-                                }
-                            }
-                            catch (Exception)
-                            {
-                                showBalloon("Deleting file/folder......", "Delete.", ToolTipIcon.Info);
-                                Removeobject(e.FullPath);
-                                Deletefolder(relativePath + "/");
-                            }
-                            break;
-                        }
-                    case WatcherChangeTypes.Renamed:
-                        {
-                            try
-                            {
-                                var attribute = System.IO.File.GetAttributes(e.FullPath);
-                                var renamedEvent = (RenamedEventArgs)e;
-                                if (attribute != FileAttributes.Directory && attribute != FileAttributes.Temporary)
-                                {
-                                    showBalloon("Renaming file name...", "File name modified.", ToolTipIcon.Info);
-                                    Moveobject(renamedEvent.FullPath, renamedEvent.OldFullPath);
-                                }
-                                else
-                                {
-                                    showBalloon("Renaming folder name...", "Folder name modified.", ToolTipIcon.Info);
-                                    Modifyfolder(renamedEvent.FullPath, renamedEvent.OldFullPath);
-                                }
-                            }
-                            catch (Exception) { }
-                            break;
-                        }
-                }
+                DoObjectSync(e.ChangeType, e.FullPath, e.Name, string.Empty, string.Empty, e);
                 _syncIsPaused = false;
             }
             else
             {
-                // To do
                 // Need to maintain queue
+                if (!_fileQueue.ContainsKey(e.FullPath))
+                    _fileQueue.Add(e.FullPath, new FileQueue { Type = e.ChangeType, Name = e.Name });
+                else
+                    _fileQueue[e.FullPath] = new FileQueue { Type = e.ChangeType, Name = e.Name };
             }
         }
 
@@ -581,45 +631,265 @@ namespace VersaVaultSyncTool
         {
             try
             {
-                string url = string.Empty;
-                if (Utilities.DevelopmentMode)
-                    url = "http://localhost:3000";
-                else
-                    url = "http://versavault.com";
-                url += "/api/root_files?bucket_key=" + Utilities.MyConfig.BucketKey;
-                string result = GetResponse(url).ToString();
-                if (result != null && result != string.Empty)
+                string url = Utilities.DevelopmentMode ? "http://localhost:3000" : "http://versavault.com";
+                url += "/api/root_files?bucket_key=" + Utilities.MyConfig.BucketKey + "&machine_key=" + Utilities.MyConfig.MachineKey;
+                string result = GetResponse(url);
+                if (!string.IsNullOrEmpty(result))
                 {
-                    var res = JsonConvert.DeserializeObject<s3__object[]>(result);
+                    var res = JsonConvert.DeserializeObject<s3_object>(result);
                     if (res != null)
                     {
-                        foreach (var root_object in res)
+                        foreach (var s3Obj in res.S3Object)
                         {
-                            var s3_obj = root_object.s3_object;
-                            if (s3_obj != null)
+                            if (s3Obj != null)
                             {
-                                string full_path = Path.Combine(Utilities.Path, s3_obj.fileName);
-                                if (s3_obj.folder)
+                                string fullPath = Path.Combine(Utilities.Path, s3Obj.Key.Replace("/", "\\"));
+                                if (s3Obj.Folder)
                                 {
-                                    if (!Directory.Exists(full_path))
+                                    if (s3Obj.Status)
                                     {
-                                        download_folder(s3_obj);
+                                        if (!Directory.Exists(fullPath))
+                                        {
+                                            DownloadFolder(s3Obj);
+                                        }
+                                        else
+                                        {
+                                            try
+                                            {
+                                                TimeSpan timeSpan = new DirectoryInfo(fullPath).LastWriteTime.Subtract(s3Obj.LastModified);
+                                                if (Math.Floor(timeSpan.TotalSeconds) != 0)
+                                                {
+                                                    string relativePath = fullPath.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
+                                                    _applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new DirectoryInfo(fullPath).LastWriteTime, Status = UpdateStatus.Update });
+                                                    DownloadFolder(s3Obj);
+                                                }
+                                            }
+                                            catch (Exception)
+                                            {
+                                                // Todo
+                                                // need to fix this when an error occured
+                                            }
+                                        }
                                     }
                                     else
                                     {
-                                        // need to check the modified time here
+                                        // Need to delete the folder
+                                        try
+                                        {
+                                            // need to check if the directory is updated in your machine
+                                            if (Directory.Exists(fullPath))
+                                            {
+                                                TimeSpan timeSpan = new DirectoryInfo(fullPath).LastWriteTime.Subtract(s3Obj.LastModified);
+                                                if (Math.Floor(timeSpan.TotalSeconds) < 1)
+                                                    Directory.Delete(fullPath, true);
+                                            }
+                                        }
+                                        catch (Exception)
+                                        {
+                                            // Todo
+                                            // how to handle when it is used by some other process
+                                        }
                                     }
                                 }
                                 else
                                 {
-                                    if (!File.Exists(full_path))
+                                    if (s3Obj.Status)
                                     {
-                                        download_objects.Add(full_path);
-                                        service.GetObject(Utilities.MyConfig.BucketKey, s3_obj.key, full_path);
+                                        if (!File.Exists(fullPath))
+                                        {
+                                            try
+                                            {
+                                                _downloadObjects.Add(fullPath);
+                                                _service.GetObject(Utilities.MyConfig.BucketKey, s3Obj.Key, fullPath);
+                                                string relativePath = fullPath.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
+                                                _applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPath).LastWriteTime, Status = UpdateStatus.Update });
+                                            }
+                                            catch (Exception)
+                                            {
+                                                // Todo
+                                                // need to handle if an error occured when downloading file
+                                            }
+                                        }
+                                        else
+                                        {
+                                            try
+                                            {
+                                                if (!IsFileUsedbyAnotherProcess(fullPath))
+                                                {
+                                                    TimeSpan timeSpan = new FileInfo(fullPath).LastWriteTime.Subtract(s3Obj.LastModified);
+                                                    if (Math.Floor(timeSpan.TotalSeconds) != 0)
+                                                    {
+                                                        _downloadObjects.Add(fullPath);
+                                                        _service.GetObject(Utilities.MyConfig.BucketKey, s3Obj.Key, fullPath);
+                                                        string relativePath = fullPath.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
+                                                        _applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPath).LastWriteTime, Status = UpdateStatus.Update });
+                                                    }
+                                                }
+                                            }
+                                            catch (Exception)
+                                            {
+                                                // Todo
+                                                // need to fix this when an error occured
+                                            }
+                                        }
                                     }
                                     else
                                     {
-                                        // need to check the modified time here
+                                        // need to delete the file here
+                                        try
+                                        {
+                                            if (File.Exists(fullPath))
+                                            {
+                                                TimeSpan timeSpan = new FileInfo(fullPath).LastWriteTime.Subtract(s3Obj.LastModified);
+                                                if (Math.Floor(timeSpan.TotalSeconds) < 1)
+                                                    File.Delete(fullPath);
+                                                else
+                                                    Addobject(fullPath);
+                                            }
+                                        }
+                                        catch (Exception)
+                                        {
+                                            // Todo
+                                            // need to fix if the file is used
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        UploadMissedFiles(res.S3Object, Utilities.Path);
+                    }
+                    else
+                    {
+                        var thread = new Thread(StartAmazonFilesSync);
+                        thread.Start();
+                    }
+                }
+                else
+                {
+                    var thread = new Thread(StartAmazonFilesSync);
+                    thread.Start();
+                }
+            }
+            catch (Exception)
+            {
+                return;
+            }
+        }
+
+        private void UploadMissedFiles(IEnumerable<S3Object> s3Objects, string path)
+        {
+            // Finally Here we checking whether any files found in this folder to upload
+            // files first
+            foreach (string file in Directory.GetFiles(path))
+            {
+                bool isFilefound = false;
+                foreach (S3Object s3Object in s3Objects)
+                {
+                    string filename = file.Replace(Utilities.Path + "\\", "");
+                    if (s3Object != null && !s3Object.Folder && s3Object.Key.ToLower().Trim() == filename.Trim().ToLower())
+                    {
+                        isFilefound = true;
+                        break;
+                    }
+                }
+                if (!isFilefound)
+                    Addobject(file);
+            }
+
+            // folders
+            foreach (string directory in Directory.GetDirectories(Utilities.Path))
+            {
+                bool isFolderfound = false;
+                foreach (S3Object s3Object in s3Objects)
+                {
+                    string key = directory.Replace(Utilities.Path + "\\", "");
+                    if (s3Object != null && s3Object.Folder && s3Object.Key.ToLower().Trim() == key.Trim().ToLower())
+                    {
+                        isFolderfound = true;
+                        break;
+                    }
+                }
+                if (!isFolderfound)
+                    Uploadfiles(directory);
+            }
+        }
+
+        private void DownloadFolder(S3Object s3Obj)
+        {
+            string fullPath = Path.Combine(Utilities.Path, s3Obj.Key.Replace("/", "\\"));
+            try
+            {
+                // need to import complete directory
+                _downloadObjects.Add(fullPath);
+                if (!Directory.Exists(fullPath))
+                    Directory.CreateDirectory(fullPath);
+                // get the folder structure from application database
+                string url = Utilities.DevelopmentMode ? "http://localhost:3000" : "http://versavault.com";
+                url += "/api/child_files?bucket_key=" + Utilities.MyConfig.BucketKey + "&parent_uid=" + s3Obj.Uid + "&machine_key=" + Utilities.MyConfig.MachineKey;
+                string result = GetResponse(url);
+                if (!string.IsNullOrEmpty(result))
+                {
+                    var res = JsonConvert.DeserializeObject<s3_object>(result);
+                    foreach (var s3ObjSub in res.S3Object)
+                    {
+                        if (s3ObjSub != null)
+                        {
+                            string fullPathSub = Path.Combine(Utilities.Path, s3ObjSub.Key.Replace("/", "\\"));
+                            if (s3ObjSub.Folder)
+                            {
+                                if (!Directory.Exists(fullPathSub))
+                                {
+                                    DownloadFolder(s3ObjSub);
+                                }
+                                else
+                                {
+                                    try
+                                    {
+                                        TimeSpan timeSpan = new DirectoryInfo(fullPathSub).LastWriteTime.Subtract(s3ObjSub.LastModified);
+                                        if (Math.Floor(timeSpan.TotalSeconds) != 0)
+                                        {
+                                            _downloadObjects.Add(fullPathSub);
+                                            DownloadFolder(s3ObjSub);
+                                            string relativePath = fullPathSub.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
+                                            _applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Update });
+                                        }
+                                    }
+                                    catch (Exception)
+                                    {
+                                        // Todo
+                                        // need to fix this when an error occured
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                if (!File.Exists(fullPathSub))
+                                {
+                                    _downloadObjects.Add(fullPathSub);
+                                    _service.GetObject(Utilities.MyConfig.BucketKey, s3ObjSub.Key, fullPathSub);
+                                    string relativePath = fullPathSub.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
+                                    _applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Update });
+                                }
+                                else
+                                {
+                                    try
+                                    {
+                                        if (!IsFileUsedbyAnotherProcess(fullPathSub))
+                                        {
+                                            TimeSpan timeSpan = new FileInfo(fullPathSub).LastWriteTime.Subtract(s3ObjSub.LastModified);
+                                            if (Math.Floor(timeSpan.TotalSeconds) != 0)
+                                            {
+                                                _downloadObjects.Add(fullPathSub);
+                                                _service.GetObject(Utilities.MyConfig.BucketKey, s3ObjSub.Key, fullPathSub);
+                                                string relativePath = fullPathSub.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
+                                                _applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Update });
+                                            }
+                                        }
+                                    }
+                                    catch (Exception)
+                                    {
+                                        // Todo
+                                        // need to fix this when an error occured
                                     }
                                 }
                             }
@@ -627,89 +897,481 @@ namespace VersaVaultSyncTool
                     }
                 }
             }
-
-            catch (Exception ex)
+            catch (Exception)
             {
+                // Todo
+                // need to figure it out why it is happening
+            }
+            finally
+            {
+                _applicationUpates.Enqueue(new AppUpdateInfo { Key = s3Obj.Key, LastModifiedTime = new DirectoryInfo(fullPath).LastWriteTime, Status = UpdateStatus.Update });
             }
         }
 
-        private void download_folder(s3object s3_obj)
+        private void ModifySyncStatus(string status, long bytesTransferred, long bytesTotal, string key)
         {
-            string full_path = Path.Combine(Utilities.Path, s3_obj.key.Replace("/", "\\"));
-            // need to import complete directory
-            string url;
-            download_objects.Add(full_path);
-            Directory.CreateDirectory(full_path);
-            // get the folder structure from application database
-            if (Utilities.DevelopmentMode)
-                url = "http://localhost:3000";
-            else
-                url = "http://versavault.com";
-            url += "/api/child_files?bucket_key=" + Utilities.MyConfig.BucketKey + "&parent_uid=" + s3_obj.uid;
-            string result = GetResponse(url).ToString();
-            if (result != null && result != string.Empty)
+            if (bytesTransferred != 0)
             {
-                var res = JsonConvert.DeserializeObject<s3__object[]>(result);
-                foreach (var root_object in res)
+                string value = string.Empty;
+                if (bytesTransferred != bytesTotal)
                 {
-                    var s3_obj_sub = root_object.s3_object;
-                    if (s3_obj_sub != null)
+                    if (bytesTotal >= 1048576)
                     {
-                        string full_path_sub = Path.Combine(Utilities.Path, s3_obj_sub.key.Replace("/", "\\"));
-                        if (s3_obj_sub.folder)
+                        var completed = Math.Round(Convert.ToDouble(bytesTransferred / 1048576), 2);
+                        var total = Math.Round(Convert.ToDouble(bytesTotal / 1048576), 2);
+                        var percentage = Math.Round((completed / total) * 100, 0);
+                        if (percentage != 0 && percentage % 3 == 0 && !_syncStatusDictionary.Contains(key + "_" + percentage))
                         {
-                            if (!Directory.Exists(full_path_sub))
-                            {
-                                download_folder(s3_obj_sub);
-                            }
-                            else
-                            {
-                                // need to check the modified time here
-                            }
+                            _syncStatusDictionary.Add(key + "_" + percentage);
+                            value = status + " " + completed + "MB out of  " + total + "MB - " + key;
                         }
-                        else
+                    }
+                    else if (bytesTotal >= 1024)
+                    {
+                        var completed = Math.Round(Convert.ToDouble(bytesTransferred / 1024), 2);
+                        var total = Math.Round(Convert.ToDouble(bytesTotal / 1024), 2);
+                        var percentage = Math.Round((completed / total) * 100, 0);
+                        if (percentage != 0 && percentage % 10 == 0 && !_syncStatusDictionary.Contains(key + "_" + percentage))
                         {
-                            if (!File.Exists(full_path_sub))
-                            {
-                                download_objects.Add(full_path_sub);
-                                service.GetObject(Utilities.MyConfig.BucketKey, s3_obj_sub.key, full_path_sub);
-                            }
-                            else
-                            {
-                                // need to check the modified time here
-                            }
+                            _syncStatusDictionary.Add(key + "_" + percentage);
+                            value = status + " " + completed + "KB out of  " + total + "KB - " + key;
+                        }
+                    }
+                    else
+                    {
+                        var percentage = Math.Round(Convert.ToDouble(bytesTransferred / bytesTotal) * 100, 0);
+                        if (percentage % 25 == 0 && !_syncStatusDictionary.Contains(key + "_" + percentage))
+                        {
+                            _syncStatusDictionary.Add(key + "_" + percentage);
+                            value = status + " " + bytesTransferred + "Bytes out of  " + bytesTotal + "Bytes - " + key;
                         }
                     }
                 }
+                else
+                {
+                    value = status + " " + key;
+                    // clear the SysStatusDictionary
+                    while (true)
+                    {
+                        bool iskeyremoved = false;
+                        foreach (string keyString in _syncStatusDictionary)
+                        {
+                            if (keyString.IndexOf(key) == 0)
+                            {
+                                _syncStatusDictionary.Remove(keyString);
+                                iskeyremoved = true;
+                                break;
+                            }
+                        }
+                        if (iskeyremoved == false)
+                            break;
+                    }
+                }
+                if (!string.IsNullOrEmpty(value) && !_syncStatus.Contains(value))
+                    _syncStatus.Enqueue(value);
             }
+            Application.DoEvents();
         }
 
-        private void update_application(string key)
+        private void TimerStatusUpdateTick(object sender, EventArgs e)
+        {
+            if (_syncStatus.Count != 0)
+                VersaVaultNotifications.ShowBalloonTip(10, string.Empty, _syncStatus.Dequeue().ToString(), ToolTipIcon.Info);
+
+            if (_fileQueue.Count > 0 && !_isThreadStarted)
+            {
+                _isThreadStarted = true;
+                var thread = new Thread(ProcessFileQueueThead);
+                thread.Start();
+                Application.DoEvents();
+            }
+
+            if (_applicationUpates.Count > 0)
+            {
+                var thread = new Thread(ProcessApplicationUpdates);
+                thread.Start();
+            }
+
+            if (_syncStatus.Count == 0 && _fileQueue.Count == 0 && _applicationUpates.Count == 0)
+                timer_status_update.Interval = 1000;
+            else
+                timer_status_update.Interval = 500;
+        }
+
+        private void ProcessFileQueueThead()
+        {
+            if (_fileQueue.Count > 0)
+            {
+                while (true)
+                {
+                    foreach (var obj in _fileQueue.Keys)
+                    {
+                        var fileQ = (FileQueue)_fileQueue[obj];
+                        _fileQueue.Remove(obj);
+                        DoObjectSync(fileQ.Type, obj.ToString(), fileQ.Name, fileQ.OldFullpath, fileQ.OldName, null);
+                        break;
+                    }
+                    if (_fileQueue.Count == 0)
+                        break;
+                    Application.DoEvents();
+                }
+            }
+            _isThreadStarted = false;
+        }
+
+        private void ProcessApplicationUpdates()
         {
             try
             {
-                string url = string.Empty;
-                if (Utilities.DevelopmentMode)
-                    url = "http://localhost:3000";
-                else
-                    url = "http://versavault.com";
-                url += "/api/update_files?bucket_key=" + Utilities.MyConfig.BucketKey + "&key=" + key;
-                string result = GetResponse(url).ToString();
-                if (string.IsNullOrEmpty(result))
+                if (_applicationUpates.Count > 0)
                 {
+                    var appupdateinfo = (AppUpdateInfo)_applicationUpates.Dequeue();
+                    string url = Utilities.DevelopmentMode ? "http://localhost:3000" : "http://versavault.com";
+                    switch (appupdateinfo.Status)
+                    {
+                        case UpdateStatus.Update:
+                            {
+                                url += "/api/update_files?bucket_key=" + Utilities.MyConfig.BucketKey + "&key=" +
+                                       appupdateinfo.Key + "&last_modified=" +
+                                       appupdateinfo.LastModifiedTime.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss tt") + "&machine_key=" +
+                                       Utilities.MyConfig.MachineKey;
+                                GetResponse(url);
+                                break;
+                            }
+                        case UpdateStatus.Delete:
+                            {
+                                url += "/api/delete_files?bucket_key=" + Utilities.MyConfig.BucketKey + "&key=" + appupdateinfo.Key + "&machine_key=" + Utilities.MyConfig.MachineKey;
+                                GetResponse(url);
+                                break;
+                            }
+                    }
                 }
             }
-            catch (Exception) { }
+            catch (Exception)
+            {
+                // Todo
+                // Need to fix some how if any error happens here
+                return;
+            }
         }
 
-        private void statusToolStripMenuItem_Click(object sender, EventArgs e)
+        private void DoObjectSync(WatcherChangeTypes type, string fullPath, string name, string oldfullpath, string oldname, FileSystemEventArgs e)
         {
+            switch (type)
+            {
+                case WatcherChangeTypes.Changed: // some how we have to avoid unncessary uploads
+                    {
+                        try
+                        {
+                            if (!_downloadObjects.Contains(fullPath))
+                            {
+                                var attribute = File.GetAttributes(fullPath);
+                                if (attribute != (FileAttributes.Archive | FileAttributes.Hidden))
+                                {
+                                    if (attribute != FileAttributes.Directory)
+                                    {
+                                        if (!IsFileUsedbyAnotherProcess(fullPath))
+                                        {
+                                            // get the file last modified from database
+                                            string url = Utilities.DevelopmentMode ? "http://localhost:3000" : "http://versavault.com";
+                                            url += "/api/get_object_status?bucket_key=" + Utilities.MyConfig.BucketKey + "&key=" + "" + "&machine_key=" + Utilities.MyConfig.MachineKey;
+                                            string result = GetResponse(url);
+                                            if (!string.IsNullOrEmpty(result))
+                                            {
+                                                var res = JsonConvert.DeserializeObject<s3_object>(result);
+                                                foreach (var s3ObjSub in res.S3Object)
+                                                {
+                                                    if (s3ObjSub != null)
+                                                    {
+                                                        string fullPathSub = Path.Combine(Utilities.Path, s3ObjSub.Key.Replace("/", "\\"));
+                                                        if (!s3ObjSub.Folder)
+                                                        {
+                                                            try
+                                                            {
+                                                                TimeSpan timeSpan = new DirectoryInfo(fullPathSub).LastWriteTime.Subtract(s3ObjSub.LastModified);
+                                                                if (Math.Floor(timeSpan.TotalSeconds) != 0)
+                                                                {
+                                                                    string relativePath = fullPathSub.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
+                                                                    _applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Update });
+                                                                    ShowBalloon("Uploading file content......");
+                                                                    Addobject(fullPath);
+                                                                }
+                                                            }
+                                                            catch (Exception)
+                                                            {
+                                                                // Todo
+                                                                // need to fix this when an error occured
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        else
+                                        {
+                                            // Need to maintain queue
+                                            if (!_fileQueue.ContainsKey(fullPath))
+                                                _fileQueue.Add(fullPath, new FileQueue { Type = type, Name = name });
+                                            else
+                                                _fileQueue[fullPath] = new FileQueue { Type = type, Name = name };
+                                            return;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            return;
+                        }
+                        break;
+                    }
+                case WatcherChangeTypes.Created:
+                    {
+                        try
+                        {
+                            if (!_downloadObjects.Contains(fullPath))
+                            {
+                                var attribute = File.GetAttributes(fullPath);
+                                if (attribute != (FileAttributes.Archive | FileAttributes.Hidden))
+                                {
+                                    if (attribute != FileAttributes.Directory)
+                                    {
+                                        if (!IsFileUsedbyAnotherProcess(fullPath))
+                                        {
+                                            ShowBalloon("Uploading file content......");
+                                            Addobject(fullPath);
+                                        }
+                                        else
+                                        {
+                                            // Need to maintain queue
+                                            if (!_fileQueue.ContainsKey(fullPath))
+                                                _fileQueue.Add(fullPath, new FileQueue { Type = type, Name = name });
+                                            else
+                                                _fileQueue[fullPath] = new FileQueue { Type = type, Name = name };
+                                            return;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // Creating an Folder
+                                        Createfolder(fullPath);
+                                        // If it is restored from the recylebin / pasted from another location then upload folder structure completely
+                                        Uploadfiles(fullPath);
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            return;
+                        }
+                        break;
+                    }
+                case WatcherChangeTypes.Deleted:
+                    {
+                        string relativePath = fullPath.Replace(Utilities.Path + "\\", "");
+                        ShowBalloon("Deleting ......");
+                        Removeobject(fullPath);
+                        Deletefolder(relativePath + "/");
+                        break;
+                    }
+                case WatcherChangeTypes.Renamed:
+                    {
+                        try
+                        {
+                            var attribute = File.GetAttributes(fullPath);
+                            if (attribute != (FileAttributes.Archive | FileAttributes.Hidden))
+                            {
+                                if (attribute != FileAttributes.Directory)
+                                {
+                                    if (!IsFileUsedbyAnotherProcess(fullPath))
+                                    {
+                                        ShowBalloon("Renaming a file...");
+                                        if (e != null)
+                                        {
+                                            var renamedEvent = (RenamedEventArgs)e;
+                                            Moveobject(renamedEvent.FullPath, renamedEvent.OldFullPath);
+                                        }
+                                        else
+                                            Moveobject(fullPath, oldfullpath);
+                                    }
+                                    else
+                                    {
+                                        // Need to maintain queue
+                                        if (e != null)
+                                        {
+                                            var renamedEvent = (RenamedEventArgs)e;
+                                            if (!_fileQueue.ContainsKey(fullPath))
+                                                _fileQueue.Add(fullPath, new FileQueue { Type = type, Name = name, OldFullpath = renamedEvent.OldFullPath, OldName = renamedEvent.OldName });
+                                            else
+                                                _fileQueue[fullPath] = new FileQueue { Type = type, Name = name, OldFullpath = renamedEvent.OldFullPath, OldName = renamedEvent.OldName };
+                                        }
+                                        else
+                                        {
+                                            if (!_fileQueue.ContainsKey(fullPath))
+                                                _fileQueue.Add(fullPath, new FileQueue { Type = type, Name = name, OldFullpath = oldfullpath, OldName = oldname });
+                                            else
+                                                _fileQueue[fullPath] = new FileQueue { Type = type, Name = name, OldFullpath = oldfullpath, OldName = oldname };
+                                        }
+                                        return;
+                                    }
+                                }
+                                else
+                                {
+                                    var renamedEvent = (RenamedEventArgs)e;
+                                    ShowBalloon("Renaming a folder...");
+                                    Modifyfolder(fullPath, renamedEvent.OldFullPath);
+                                }
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            return;
+                        }
+                        break;
+                    }
+            }
+            return;
         }
 
-        private void timer_status_update_Tick(object sender, EventArgs e)
+        private void closeWindow_Click(object sender, EventArgs e)
         {
-            if (!string.IsNullOrEmpty(SyncStatus))
-                VersaVaultNotifications.ShowBalloonTip(100, string.Empty, SyncStatus, ToolTipIcon.Info);
+            HideForm();
+        }
+
+        private void ShowForm()
+        {
+            _ds.Show();
+            Application.DoEvents();
+            Visible = true;
+            Application.DoEvents();
+            Opacity = 1;
+            Application.DoEvents();
+            Show();
+            Application.DoEvents();
+            WindowState = FormWindowState.Normal;
+            Application.DoEvents();
+        }
+
+        private void HideForm()
+        {
+            Visible = false;
+            Application.DoEvents();
+            Opacity = 0;
+            Application.DoEvents();
+            Hide();
+            Application.DoEvents();
+            WindowState = FormWindowState.Minimized;
+            Application.DoEvents();
+            _ds.Hide();
+            Application.DoEvents();
+        }
+
+        private void closeWindow_MouseLeave(object sender, EventArgs e)
+        {
+            closeWindow.Image = Properties.Resources.closeDefault;
+        }
+
+        private void closeWindow_MouseEnter(object sender, EventArgs e)
+        {
+            closeWindow.Image = Properties.Resources.closeHover;
+        }
+
+        //const and dll functions for moving form
+        public const int WM_NCLBUTTONDOWN = 0xA1;
+        public const int HT_CAPTION = 0x2;
+
+        [DllImport("user32.dll")]
+        public static extern int SendMessage(IntPtr hWnd,
+            int Msg, int wParam, int lParam);
+
+        [DllImportAttribute("user32.dll")]
+        public static extern bool ReleaseCapture();
+
+        private void pictureBox1_MouseDown(object sender, MouseEventArgs e)
+        {
+            ReleaseCapture();
+            SendMessage(Handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
+        }
+
+        private void connectBtn_MouseEnter(object sender, EventArgs e)
+        {
+            connectBtn.Image = Properties.Resources.connectButton_Hover;
+        }
+
+        private void connectBtn_MouseLeave(object sender, EventArgs e)
+        {
+            connectBtn.Image = Properties.Resources.connectButton_Normal;
+        }
+
+        private void connectBtn_MouseDown(object sender, MouseEventArgs e)
+        {
+            connectBtn.Image = Properties.Resources.connectButton_Activel;
+        }
+
+        private void connectBtn_MouseUp(object sender, MouseEventArgs e)
+        {
+            connectBtn.Image = Properties.Resources.connectButton_Hover;
+        }
+    }
+
+    [Serializable]
+    class FileQueue
+    {
+        public WatcherChangeTypes Type { get; set; }
+
+        public string Name { get; set; }
+
+        public string OldFullpath { get; set; }
+
+        public string OldName { get; set; }
+    }
+
+    [Serializable]
+    class AppUpdateInfo
+    {
+        public string Key { get; set; }
+
+        public DateTime LastModifiedTime { get; set; }
+
+        public UpdateStatus Status { get; set; }
+    }
+
+    enum UpdateStatus
+    {
+        Update,
+        Delete
+    }
+
+    public class DropShadow : Form
+    {
+        public DropShadow()
+        {
+            Opacity = 0.2;
+            BackColor = Color.Gray;
+            ShowInTaskbar = false;
+            FormBorderStyle = FormBorderStyle.None;
+            StartPosition = FormStartPosition.CenterScreen;
+        }
+
+        public override sealed Color BackColor
+        {
+            get { return base.BackColor; }
+            set { base.BackColor = value; }
+        }
+
+        private const int WsExTransparent = 0x20;
+        private const int WsExNoactivate = 0x8000000;
+
+        protected override CreateParams CreateParams
+        {
+            get
+            {
+                CreateParams cp = base.CreateParams;
+                cp.ExStyle = cp.ExStyle | WsExTransparent | WsExNoactivate;
+                return cp;
+            }
         }
     }
 }

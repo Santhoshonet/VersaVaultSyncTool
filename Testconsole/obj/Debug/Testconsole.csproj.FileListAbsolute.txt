@@ -1,0 +1,5 @@
+C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\Testconsole\bin\Debug\Testconsole.exe
+C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\Testconsole\bin\Debug\Testconsole.pdb
+C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\Testconsole\obj\Debug\ResolveAssemblyReference.cache
+C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\Testconsole\obj\Debug\Testconsole.exe
+C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\Testconsole\obj\Debug\Testconsole.pdb

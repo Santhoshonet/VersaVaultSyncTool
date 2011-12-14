@@ -8,7 +8,7 @@ namespace VersaVaultSyncTool
     {
         public static string AwsAccessKey = "AKIAIW36YM46YELZCT3A";
         public static string AwsSecretKey = "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";
-        public static bool DevelopmentMode = true;
+        public static bool DevelopmentMode = false;
         public static string Path = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "VersaVault");
         public static string AppPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VersaVault");
         public static Myconfiguration MyConfig = new Myconfiguration();
@@ -39,7 +39,7 @@ namespace VersaVaultSyncTool
 
     public sealed class Myconfiguration : ApplicationSettingsBase
     {
-        [UserScopedSetting()]
+        [UserScopedSetting]
         [DefaultSettingValueAttribute("")]
         public string BucketKey
         {
@@ -47,7 +47,15 @@ namespace VersaVaultSyncTool
             set { this["BucketKey"] = value; }
         }
 
-        [UserScopedSetting()]
+        [UserScopedSetting]
+        [DefaultSettingValueAttribute("")]
+        public string MachineKey
+        {
+            get { return (string)this["MachineKey"]; }
+            set { this["MachineKey"] = value; }
+        }
+
+        [UserScopedSetting]
         [DefaultSettingValueAttribute("")]
         public string Username
         {
@@ -55,7 +63,7 @@ namespace VersaVaultSyncTool
             set { this["Username"] = value; }
         }
 
-        [UserScopedSetting()]
+        [UserScopedSetting]
         [DefaultSettingValueAttribute("")]
         public string Password
         {
@@ -64,46 +72,10 @@ namespace VersaVaultSyncTool
         }
     }
 
-    public class account
+    public class Account
     {
-        public string error { get; set; }
+        public string Error { get; set; }
 
-        public string bucket_id { get; set; }
-    }
-
-    public class s3__object
-    {
-        public s3object s3_object { get; set; }
-    }
-
-    public class s3object
-    {
-        public int authentication_id { get; set; }
-
-        public string content_length { get; set; }
-
-        public DateTime created_at { get; set; }
-
-        public string fileName { get; set; }
-
-        public bool folder { get; set; }
-
-        public int id { get; set; }
-
-        public string key { get; set; }
-
-        public DateTime lastModified { get; set; }
-
-        public string parent { get; set; }
-
-        public string parent_uid { get; set; }
-
-        public bool rootFolder { get; set; }
-
-        public string uid { get; set; }
-
-        public DateTime updated_at { get; set; }
-
-        public string url { get; set; }
+        public string BucketId { get; set; }
     }
 }

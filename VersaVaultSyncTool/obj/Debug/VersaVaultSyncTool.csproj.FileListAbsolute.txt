@@ -6,7 +6,8 @@ C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSync
 C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\VersaVaultSyncTool\bin\Debug\Newtonsoft.Json.xml
 C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\VersaVaultSyncTool\obj\Debug\ResolveAssemblyReference.cache
 C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\VersaVaultSyncTool\obj\Debug\VersaVaultSyncTool.Properties.Resources.resources
-C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\VersaVaultSyncTool\obj\Debug\VersaVaultSyncTool.VersaVault.resources
 C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\VersaVaultSyncTool\obj\Debug\VersaVaultSyncTool.csproj.GenerateResource.Cache
 C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\VersaVaultSyncTool\obj\Debug\VersaVaultSyncTool.exe
 C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\VersaVaultSyncTool\obj\Debug\VersaVaultSyncTool.pdb
+C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\VersaVaultSyncTool\bin\Debug\AWSSDK.dll
+C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\VersaVaultSyncTool\obj\Debug\VersaVaultSyncTool.VersaVault.resources

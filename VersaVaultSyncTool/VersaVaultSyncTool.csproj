@@ -12,6 +12,7 @@
     <AssemblyName>VersaVaultSyncTool</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <ApplicationIcon>favicon.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -31,6 +32,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AWSSDK, Version=1.2.2.0, Culture=neutral, PublicKeyToken=cd2d24cd2bace800, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\AWSSDK.dll</HintPath>
+    </Reference>
     <Reference Include="LitS3, Version=1.0.1.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\LitS3.dll</HintPath>
@@ -69,6 +74,7 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -79,6 +85,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <Compile Include="S3Object.cs" />
     <Compile Include="Utilities.cs" />
     <Compile Include="VersaVault.cs">
       <SubType>Form</SubType>
@@ -86,6 +93,21 @@
     <Compile Include="VersaVault.Designer.cs">
       <DependentUpon>VersaVault.cs</DependentUpon>
     </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="favicon.ico" />
+    <None Include="Resources\connectButton-Normal.png" />
+    <None Include="Resources\connectButton-Hover.png" />
+    <None Include="Resources\connectButton-Activel.png" />
+    <None Include="Resources\Windows-App-UI---Settings-logo.png" />
+    <None Include="Resources\windowsAppLogo.png" />
+    <None Include="Resources\webApplogo.png" />
+    <None Include="Resources\topStrip.png" />
+    <None Include="Resources\favicon.png" />
+    <None Include="Resources\connectButtonHovert.png" />
+    <None Include="Resources\connectButtonDefault.png" />
+    <None Include="Resources\closeHover.png" />
+    <None Include="Resources\closeDefault.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
@@ -95,4 +117,7 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <PropertyGroup>
+    <PostBuildEvent>ISCC.exe "C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\Setup_32Bit\setup.iss"</PostBuildEvent>
+  </PropertyGroup>
 </Project>
