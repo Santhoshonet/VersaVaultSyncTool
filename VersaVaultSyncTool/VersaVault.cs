@@ -757,6 +757,7 @@ namespace VersaVaultSyncTool
                             }
                         }
                         UploadMissedFiles(res.S3Object, Utilities.Path);
+                        _downloadObjects.Clear();
                     }
                     else
                     {
@@ -786,31 +787,44 @@ namespace VersaVaultSyncTool
                 foreach (S3Object s3Object in s3Objects)
                 {
                     string filename = file.Replace(Utilities.Path + "\\", "");
-                    if (s3Object != null && !s3Object.Folder && s3Object.Key.ToLower().Trim() == filename.Trim().ToLower())
+                    if (s3Object != null && !s3Object.Folder && s3Object.Key.Replace("/", "\\").ToLower().Trim() == filename.Trim().ToLower())
                     {
                         isFilefound = true;
                         break;
                     }
                 }
-                if (!isFilefound)
+                if (!isFilefound && new FileInfo(file).Length != 0)
                     Addobject(file);
             }
 
             // folders
-            foreach (string directory in Directory.GetDirectories(Utilities.Path))
+            foreach (string directory in Directory.GetDirectories(path))
             {
                 bool isFolderfound = false;
+                S3Object directoryObject = null;
                 foreach (S3Object s3Object in s3Objects)
                 {
                     string key = directory.Replace(Utilities.Path + "\\", "");
-                    if (s3Object != null && s3Object.Folder && s3Object.Key.ToLower().Trim() == key.Trim().ToLower())
+                    if (s3Object != null && s3Object.Folder && s3Object.Key.Replace("/", "\\").ToLower().Trim() == key.Trim().ToLower())
                     {
+                        directoryObject = s3Object;
                         isFolderfound = true;
                         break;
                     }
                 }
                 if (!isFolderfound)
                     Uploadfiles(directory);
+                else
+                {
+                    string url = Utilities.DevelopmentMode ? "http://localhost:3000" : "http://versavault.com";
+                    url += "/api/child_files?bucket_key=" + Utilities.MyConfig.BucketKey + "&parent_uid=" + directoryObject.Uid + "&machine_key=" + Utilities.MyConfig.MachineKey;
+                    string result = GetResponse(url);
+                    if (!string.IsNullOrEmpty(result))
+                    {
+                        var res = JsonConvert.DeserializeObject<s3_object>(result);
+                        UploadMissedFiles(res.S3Object, directory);
+                    }
+                }
             }
         }
 
@@ -1008,7 +1022,13 @@ namespace VersaVaultSyncTool
                     {
                         var fileQ = (FileQueue)_fileQueue[obj];
                         _fileQueue.Remove(obj);
-                        DoObjectSync(fileQ.Type, obj.ToString(), fileQ.Name, fileQ.OldFullpath, fileQ.OldName, null);
+                        if (File.Exists(obj.ToString()))
+                        {
+                            if (new FileInfo(obj.ToString()).Length != 0)
+                                DoObjectSync(fileQ.Type, obj.ToString(), fileQ.Name, fileQ.OldFullpath, fileQ.OldName, null);
+                            else
+                                _fileQueue.Add(obj.ToString(), fileQ);
+                        }
                         break;
                     }
                     if (_fileQueue.Count == 0)
@@ -1025,25 +1045,30 @@ namespace VersaVaultSyncTool
             {
                 if (_applicationUpates.Count > 0)
                 {
-                    var appupdateinfo = (AppUpdateInfo)_applicationUpates.Dequeue();
-                    string url = Utilities.DevelopmentMode ? "http://localhost:3000" : "http://versavault.com";
-                    switch (appupdateinfo.Status)
+                    while (_applicationUpates.Count != 0)
                     {
-                        case UpdateStatus.Update:
-                            {
-                                url += "/api/update_files?bucket_key=" + Utilities.MyConfig.BucketKey + "&key=" +
-                                       appupdateinfo.Key + "&last_modified=" +
-                                       appupdateinfo.LastModifiedTime.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss tt") + "&machine_key=" +
-                                       Utilities.MyConfig.MachineKey;
-                                GetResponse(url);
-                                break;
-                            }
-                        case UpdateStatus.Delete:
-                            {
-                                url += "/api/delete_files?bucket_key=" + Utilities.MyConfig.BucketKey + "&key=" + appupdateinfo.Key + "&machine_key=" + Utilities.MyConfig.MachineKey;
-                                GetResponse(url);
-                                break;
-                            }
+                        var appupdateinfo = (AppUpdateInfo)_applicationUpates.Dequeue();
+                        string url = Utilities.DevelopmentMode ? "http://localhost:3000" : "http://versavault.com";
+                        switch (appupdateinfo.Status)
+                        {
+                            case UpdateStatus.Update:
+                                {
+                                    url += "/api/update_files?bucket_key=" + Utilities.MyConfig.BucketKey + "&key=" +
+                                           appupdateinfo.Key + "&last_modified=" +
+                                           appupdateinfo.LastModifiedTime.ToUniversalTime().ToString(
+                                               "yyyy-MM-dd HH:mm:ss tt") + "&machine_key=" +
+                                           Utilities.MyConfig.MachineKey;
+                                    GetResponse(url);
+                                    break;
+                                }
+                            case UpdateStatus.Delete:
+                                {
+                                    url += "/api/delete_files?bucket_key=" + Utilities.MyConfig.BucketKey + "&key=" +
+                                           appupdateinfo.Key + "&machine_key=" + Utilities.MyConfig.MachineKey;
+                                    GetResponse(url);
+                                    break;
+                                }
+                        }
                     }
                 }
             }
@@ -1070,39 +1095,74 @@ namespace VersaVaultSyncTool
                                 {
                                     if (attribute != FileAttributes.Directory)
                                     {
-                                        if (!IsFileUsedbyAnotherProcess(fullPath))
+                                        if (!IsFileUsedbyAnotherProcess(fullPath) && new FileInfo(fullPath).Length != 0)
                                         {
                                             // get the file last modified from database
-                                            string url = Utilities.DevelopmentMode ? "http://localhost:3000" : "http://versavault.com";
-                                            url += "/api/get_object_status?bucket_key=" + Utilities.MyConfig.BucketKey + "&key=" + "" + "&machine_key=" + Utilities.MyConfig.MachineKey;
+                                            string relativePath =
+                                                fullPath.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
+                                            string url = Utilities.DevelopmentMode
+                                                             ? "http://localhost:3000"
+                                                             : "http://versavault.com";
+                                            url += "/api/get_object_status?bucket_key=" +
+                                                   Utilities.MyConfig.BucketKey + "&key=" + relativePath +
+                                                   "&machine_key=" + Utilities.MyConfig.MachineKey;
                                             string result = GetResponse(url);
                                             if (!string.IsNullOrEmpty(result))
                                             {
                                                 var res = JsonConvert.DeserializeObject<s3_object>(result);
-                                                foreach (var s3ObjSub in res.S3Object)
+                                                if (res.S3Object.Length > 0)
                                                 {
-                                                    if (s3ObjSub != null)
+                                                    foreach (var s3ObjSub in res.S3Object)
                                                     {
-                                                        string fullPathSub = Path.Combine(Utilities.Path, s3ObjSub.Key.Replace("/", "\\"));
-                                                        if (!s3ObjSub.Folder)
+                                                        if (s3ObjSub != null)
                                                         {
-                                                            try
+                                                            string fullPathSub = Path.Combine(Utilities.Path, s3ObjSub.Key.Replace("/", "\\"));
+                                                            if (!s3ObjSub.Folder)
                                                             {
-                                                                TimeSpan timeSpan = new DirectoryInfo(fullPathSub).LastWriteTime.Subtract(s3ObjSub.LastModified);
-                                                                if (Math.Floor(timeSpan.TotalSeconds) != 0)
+                                                                try
                                                                 {
-                                                                    string relativePath = fullPathSub.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
-                                                                    _applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Update });
-                                                                    ShowBalloon("Uploading file content......");
-                                                                    Addobject(fullPath);
+                                                                    TimeSpan timeSpan = new DirectoryInfo(fullPathSub).LastWriteTime.Subtract(s3ObjSub.LastModified);
+                                                                    if (Math.Floor(timeSpan.TotalSeconds) != 0)
+                                                                    {
+                                                                        //relativePath = fullPathSub.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
+                                                                        //_applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Update });
+                                                                        ShowBalloon("Uploading file content......");
+                                                                        Addobject(fullPath);
+                                                                    }
+                                                                }
+                                                                catch (Exception)
+                                                                {
+                                                                    // Todo
+                                                                    // need to fix this when an error occured
                                                                 }
                                                             }
-                                                            catch (Exception)
-                                                            {
-                                                                // Todo
-                                                                // need to fix this when an error occured
-                                                            }
                                                         }
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    try
+                                                    {
+                                                        if (!IsFileUsedbyAnotherProcess(fullPath) && new FileInfo(fullPath).Length != 0)
+                                                        {
+                                                            //relativePath = fullPath.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
+                                                            //_applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPath).LastWriteTime, Status = UpdateStatus.Update });
+                                                            ShowBalloon("Uploading file content......");
+                                                            Addobject(fullPath);
+                                                        }
+                                                        else
+                                                        {
+                                                            // Need to maintain queue
+                                                            if (!_fileQueue.ContainsKey(fullPath))
+                                                                _fileQueue.Add(fullPath, new FileQueue { Type = type, Name = name });
+                                                            else
+                                                                _fileQueue[fullPath] = new FileQueue { Type = type, Name = name };
+                                                            return;
+                                                        }
+                                                    }
+                                                    catch (Exception)
+                                                    {
+                                                        // Todo
                                                     }
                                                 }
                                             }
@@ -1137,7 +1197,7 @@ namespace VersaVaultSyncTool
                                 {
                                     if (attribute != FileAttributes.Directory)
                                     {
-                                        if (!IsFileUsedbyAnotherProcess(fullPath))
+                                        if (!IsFileUsedbyAnotherProcess(fullPath) && new FileInfo(fullPath).Length != 0)
                                         {
                                             ShowBalloon("Uploading file content......");
                                             Addobject(fullPath);
@@ -1187,14 +1247,17 @@ namespace VersaVaultSyncTool
                                 {
                                     if (!IsFileUsedbyAnotherProcess(fullPath))
                                     {
-                                        ShowBalloon("Renaming a file...");
-                                        if (e != null)
+                                        if (new FileInfo(fullPath).Length != 0)
                                         {
-                                            var renamedEvent = (RenamedEventArgs)e;
-                                            Moveobject(renamedEvent.FullPath, renamedEvent.OldFullPath);
+                                            ShowBalloon("Renaming a file...");
+                                            if (e != null)
+                                            {
+                                                var renamedEvent = (RenamedEventArgs)e;
+                                                Moveobject(renamedEvent.FullPath, renamedEvent.OldFullPath);
+                                            }
+                                            else
+                                                Moveobject(fullPath, oldfullpath);
                                         }
-                                        else
-                                            Moveobject(fullPath, oldfullpath);
                                     }
                                     else
                                     {

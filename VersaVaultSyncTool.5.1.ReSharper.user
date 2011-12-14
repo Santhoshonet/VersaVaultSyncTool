@@ -26,7 +26,7 @@
       <Item value="FormatException`0" priority="0" />
       <Item value="foreach" priority="3" />
       <Item value="systemTimeZone" priority="2" />
-      <Item value="if" priority="23" />
+      <Item value="if" priority="30" />
       <Item value="break" priority="5" />
       <Item value="Utc" priority="0" />
       <Item value="private" priority="13" />
@@ -35,19 +35,19 @@
       <Item value="ConvertDatetimeToUtc`0" priority="0" />
       <Item value="last_madified_time" priority="0" />
       <Item value="FileInfo`0" priority="1" />
-      <Item value="new" priority="16" />
+      <Item value="new" priority="17" />
       <Item value="filePath" priority="1" />
       <Item value="TimeSpan`0" priority="0" />
       <Item value="timeSpan" priority="2" />
-      <Item value="fullPath" priority="6" />
+      <Item value="fullPath" priority="8" />
       <Item value="s3Obj" priority="5" />
       <Item value="Math`0" priority="0" />
-      <Item value="try" priority="10" />
+      <Item value="try" priority="11" />
       <Item value="Directory`0" priority="2" />
       <Item value="class" priority="1" />
       <Item value="Queue`0" priority="0" />
       <Item value="Queue" priority="0" />
-      <Item value="relativePath" priority="4" />
+      <Item value="relativePath" priority="5" />
       <Item value="ApplicationUpates" priority="1" />
       <Item value="Thread`0" priority="0" />
       <Item value="thread" priority="0" />
@@ -57,9 +57,9 @@
       <Item value="file" priority="4" />
       <Item value="isFileExists" priority="0" />
       <Item value="Addobject`0" priority="1" />
-      <Item value="directory" priority="9" />
+      <Item value="directory" priority="10" />
       <Item value="directory1" priority="0" />
-      <Item value="File`0" priority="4" />
+      <Item value="File`0" priority="5" />
       <Item value="Path`0" priority="4" />
       <Item value="Serializable" priority="0" />
       <Item value="DirectoryInfo`0" priority="5" />
@@ -83,11 +83,11 @@
       <Item value="false" priority="5" />
       <Item value="Process`0" priority="2" />
       <Item value="process" priority="1" />
-      <Item value="Length" priority="1" />
-      <Item value="null" priority="3" />
+      <Item value="Length" priority="2" />
+      <Item value="null" priority="4" />
       <Item value="syncToolProcess" priority="0" />
       <Item value="args" priority="1" />
-      <Item value="else" priority="3" />
+      <Item value="else" priority="7" />
       <Item value="static" priority="0" />
       <Item value="Removesetting`0" priority="0" />
       <Item value="path" priority="0" />
@@ -96,7 +96,7 @@
       <Item value="S3Object`0" priority="1" />
       <Item value="this" priority="6" />
       <Item value="CheckForIllegalCrossThreadCalls" priority="0" />
-      <Item value="s3Object" priority="2" />
+      <Item value="s3Object" priority="3" />
       <Item value="UploadMissedFiles`0" priority="1" />
       <Item value="s3Objects" priority="2" />
       <Item value="IsFilefound" priority="1" />
@@ -170,7 +170,7 @@
       <Item value="_top" priority="3" />
       <Item value="Screen`0" priority="0" />
       <Item value="using" priority="0" />
-      <Item value="System" priority="0" />
+      <Item value="System" priority="1" />
       <Item value="Drawing" priority="0" />
       <Item value="VersaVault`0" priority="0" />
       <Item value="Minimized" priority="0" />
@@ -178,6 +178,14 @@
       <Item value="Show`0" priority="0" />
       <Item value="ShowForm`0" priority="3" />
       <Item value="_ds" priority="0" />
+      <Item value="Threading" priority="0" />
+      <Item value="obj" priority="2" />
+      <Item value="fileQ" priority="1" />
+      <Item value="_fileQueue" priority="0" />
+      <Item value="res" priority="1" />
+      <Item value="while" priority="0" />
+      <Item value="_applicationUpates" priority="0" />
+      <Item value="S3Object" priority="0" />
     </ItemStatistics>
     <ItemStatistics item="Qualified:@System.String">
       <Item value="IsNullOrEmpty`0" priority="3" />
@@ -222,11 +230,12 @@
     <ItemStatistics item="Qualified:System.String">
       <Item value="ToLower`0" priority="5" />
       <Item value="Trim`0" priority="4" />
-      <Item value="Replace`0" priority="0" />
+      <Item value="Replace`0" priority="2" />
       <Item value="ToString`0" priority="1" />
     </ItemStatistics>
     <ItemStatistics item="Qualified:System.IO.FileInfo">
       <Item value="LastWriteTime" priority="1" />
+      <Item value="Length" priority="1" />
     </ItemStatistics>
     <ItemStatistics item="Qualified:VersaVaultSyncTool.s3object">
       <Item value="lastModified" priority="0" />
@@ -249,7 +258,7 @@
     </ItemStatistics>
     <ItemStatistics item="Qualified:System.Collections.Queue">
       <Item value="Enqueue`0" priority="0" />
-      <Item value="Count" priority="1" />
+      <Item value="Count" priority="2" />
       <Item value="Dequeue`0" priority="0" />
     </ItemStatistics>
     <ItemStatistics item="Qualified:System.Threading.Thread">
@@ -268,7 +277,7 @@
     </ItemStatistics>
     <ItemStatistics item="Qualified:@System.IO.File">
       <Item value="GetAttributes`0" priority="1" />
-      <Item value="Exists`0" priority="0" />
+      <Item value="Exists`0" priority="1" />
       <Item value="Delete`0" priority="0" />
     </ItemStatistics>
     <ItemStatistics item="Qualified:@System.IO.Path">
@@ -313,7 +322,7 @@
     <ItemStatistics item="Qualified:VersaVaultSyncTool.s3_object">
       <Item value="s3_objects" priority="0" />
       <Item value="S3Objects" priority="0" />
-      <Item value="S3Object" priority="2" />
+      <Item value="S3Object" priority="4" />
     </ItemStatistics>
     <ItemStatistics item="Qualified:System.IO.DirectoryInfo">
       <Item value="Name" priority="0" />
@@ -381,6 +390,7 @@
     </ItemStatistics>
     <ItemStatistics item="Qualified:System.Collections.Generic.List`1">
       <Item value="Count" priority="0" />
+      <Item value="Clear`0" priority="0" />
     </ItemStatistics>
     <ItemStatistics item="Qualified:System.Windows.Forms.PictureBox">
       <Item value="Image" priority="3" />
@@ -426,47 +436,56 @@
     <ItemStatistics item="Qualified:@System.Windows.Forms.FormWindowState">
       <Item value="Normal" priority="0" />
     </ItemStatistics>
+    <ItemStatistics item="Qualified:VersaVaultSyncTool.FileQueue">
+      <Item value="Type" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Object">
+      <Item value="ToString`0" priority="1" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Collections.Hashtable">
+      <Item value="Add`0" priority="0" />
+    </ItemStatistics>
   </CompletionStatisticsManager>
   <RecentFiles>
     <RecentFiles>
       <File id="8F23007D-7B57-4A2C-89AF-CB313AE1E4DF/f:Program.cs" caret="456" fromTop="17" />
       <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.Designer.cs" caret="17335" fromTop="24" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Program.cs" caret="845" fromTop="26" />
       <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:S3Object.cs" caret="0" fromTop="0" />
       <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Utilities.cs" caret="0" fromTop="0" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="16226" fromTop="39" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Program.cs" caret="472" fromTop="18" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="33853" fromTop="752" />
     </RecentFiles>
     <RecentEdits>
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="524" fromTop="38" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="524" fromTop="16" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="1852" fromTop="28" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="1959" fromTop="32" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="601" fromTop="16" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="524" fromTop="12" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="61736" fromTop="36" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="62603" fromTop="39" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="62606" fromTop="0" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="62606" fromTop="9" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="62606" fromTop="19" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="61177" fromTop="24" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="60503" fromTop="19" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="60842" fromTop="28" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="59571" fromTop="31" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="58779" fromTop="16" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="59136" fromTop="26" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="59509" fromTop="38" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="59136" fromTop="23" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="59173" fromTop="28" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="6902" fromTop="19" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="8341" fromTop="19" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="10579" fromTop="19" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="10754" fromTop="28" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="62606" fromTop="76" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="1550" fromTop="19" />
       <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="1766" fromTop="25" />
       <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Utilities.cs" caret="346" fromTop="10" />
       <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="2182" fromTop="8" />
       <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="16693" fromTop="13" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="50765" fromTop="12" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="33261" fromTop="13" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="57853" fromTop="21" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="57853" fromTop="16" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="52783" fromTop="14" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="50084" fromTop="10" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="56340" fromTop="19" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="46795" fromTop="23" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="51312" fromTop="25" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="51735" fromTop="11" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="54994" fromTop="9" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="55579" fromTop="15" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="60376" fromTop="14" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="60986" fromTop="23" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="47340" fromTop="12" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="48834" fromTop="35" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="52608" fromTop="17" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="52159" fromTop="11" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="54389" fromTop="36" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="12367" fromTop="19" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="34614" fromTop="21" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="35731" fromTop="22" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="36074" fromTop="18" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="34766" fromTop="24" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="35196" fromTop="14" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="34262" fromTop="13" />
     </RecentEdits>
   </RecentFiles>
   <NAntValidationSettings>
