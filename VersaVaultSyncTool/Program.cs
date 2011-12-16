@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
+using Microsoft.Win32;
 
 namespace VersaVaultSyncTool
 {
@@ -15,9 +16,11 @@ namespace VersaVaultSyncTool
         [STAThread]
         static void Main(string[] args)
         {
+            SystemEvents.SessionSwitch += SystemEventsSessionSwitch;
+            SystemEvents.SessionEnding += SystemEventsSession;
             if (args.Length == 0)
             {
-                bool isthisNewApp = true;
+                bool isthisNewApp;
                 using (var mutex = new Mutex(true, "VersaVault", out isthisNewApp))
                 {
                     if (isthisNewApp)
@@ -54,6 +57,16 @@ namespace VersaVaultSyncTool
                     return;
                 }
             }
+        }
+
+        static void SystemEventsSessionSwitch(object sender, SessionSwitchEventArgs e)
+        {
+            Application.Exit();
+        }
+
+        static void SystemEventsSession(object sender, SessionEndingEventArgs sessionEndingEventArgs)
+        {
+            Application.Exit();
         }
     }
 }
