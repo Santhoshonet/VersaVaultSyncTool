@@ -1,0 +1,42 @@
+<Configuration>
+  <SettingsComponent>
+    <string />
+    <integer />
+    <boolean>
+      <setting name="SolutionAnalysisEnabled">False</setting>
+    </boolean>
+  </SettingsComponent>
+  <RecentFiles>
+    <RecentFiles>
+      <File id="171105A4-0C78-4DFF-A3B2-0A21592852CA/f:AutoUpdateStarter.cs" caret="2260" fromTop="50" />
+      <File id="171105A4-0C78-4DFF-A3B2-0A21592852CA/f:AutoUpdateStarterConfig.cs" caret="2406" fromTop="40" />
+      <File id="171105A4-0C78-4DFF-A3B2-0A21592852CA/f:Program.cs" caret="395" fromTop="15" />
+    </RecentFiles>
+    <RecentEdits>
+      <File id="171105A4-0C78-4DFF-A3B2-0A21592852CA/f:AutoUpdateStarter.cs" caret="1480" fromTop="13" />
+      <File id="171105A4-0C78-4DFF-A3B2-0A21592852CA/f:AutoUpdateStarter.cs" caret="1171" fromTop="28" />
+      <File id="171105A4-0C78-4DFF-A3B2-0A21592852CA/f:Program.cs" caret="395" fromTop="15" />
+      <File id="171105A4-0C78-4DFF-A3B2-0A21592852CA/f:Program.cs" caret="5814" fromTop="15" />
+    </RecentEdits>
+  </RecentFiles>
+  <NAntValidationSettings>
+    <NAntPath value="" />
+  </NAntValidationSettings>
+  <UnitTestRunner>
+    <Providers />
+  </UnitTestRunner>
+  <UnitTestRunnerNUnit>
+    <NUnitInstallDir IsNull="False">
+    </NUnitInstallDir>
+    <UseAddins>Never</UseAddins>
+  </UnitTestRunnerNUnit>
+  <CompletionStatisticsManager>
+    <ItemStatistics item="Default">
+      <Item value="TestApp`0" priority="0" />
+      <Item value="public" priority="1" />
+      <Item value="System" priority="1" />
+      <Item value="Data" priority="0" />
+      <Item value="using" priority="0" />
+    </ItemStatistics>
+  </CompletionStatisticsManager>
+</Configuration>

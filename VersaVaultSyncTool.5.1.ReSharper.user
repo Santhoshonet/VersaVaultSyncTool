@@ -9,11 +9,11 @@
   </SettingsComponent>
   <CompletionStatisticsManager>
     <ItemStatistics item="Default">
-      <Item value="true" priority="7" />
-      <Item value="return" priority="16" />
+      <Item value="true" priority="10" />
+      <Item value="return" priority="18" />
       <Item value="string" priority="18" />
       <Item value="result" priority="1" />
-      <Item value="var" priority="6" />
+      <Item value="var" priority="9" />
       <Item value="convertedDate" priority="2" />
       <Item value="Console`0" priority="5" />
       <Item value="mytime" priority="0" />
@@ -26,33 +26,33 @@
       <Item value="FormatException`0" priority="0" />
       <Item value="foreach" priority="3" />
       <Item value="systemTimeZone" priority="2" />
-      <Item value="if" priority="30" />
-      <Item value="break" priority="5" />
+      <Item value="if" priority="35" />
+      <Item value="break" priority="6" />
       <Item value="Utc" priority="0" />
-      <Item value="private" priority="15" />
-      <Item value="void" priority="4" />
+      <Item value="private" priority="18" />
+      <Item value="void" priority="9" />
       <Item value="dateTime" priority="2" />
       <Item value="ConvertDatetimeToUtc`0" priority="0" />
       <Item value="last_madified_time" priority="0" />
       <Item value="FileInfo`0" priority="1" />
-      <Item value="new" priority="17" />
+      <Item value="new" priority="24" />
       <Item value="filePath" priority="4" />
       <Item value="TimeSpan`0" priority="0" />
       <Item value="timeSpan" priority="2" />
       <Item value="fullPath" priority="9" />
       <Item value="s3Obj" priority="5" />
       <Item value="Math`0" priority="0" />
-      <Item value="try" priority="11" />
+      <Item value="try" priority="14" />
       <Item value="Directory`0" priority="2" />
       <Item value="class" priority="1" />
       <Item value="Queue`0" priority="1" />
       <Item value="Queue" priority="1" />
       <Item value="relativePath" priority="5" />
       <Item value="ApplicationUpates" priority="1" />
-      <Item value="Thread`0" priority="0" />
-      <Item value="thread" priority="0" />
+      <Item value="Thread`0" priority="3" />
+      <Item value="thread" priority="1" />
       <Item value="appupdateinfo" priority="2" />
-      <Item value="Utilities`0" priority="13" />
+      <Item value="Utilities`0" priority="16" />
       <Item value="bool" priority="4" />
       <Item value="file" priority="4" />
       <Item value="isFileExists" priority="0" />
@@ -65,8 +65,8 @@
       <Item value="DirectoryInfo`0" priority="6" />
       <Item value="public" priority="4" />
       <Item value="enum" priority="0" />
-      <Item value="UpdateStatus`0" priority="3" />
-      <Item value="case" priority="1" />
+      <Item value="UpdateStatus`0" priority="4" />
+      <Item value="case" priority="2" />
       <Item value="Status" priority="1" />
       <Item value="LastModifiedTime" priority="0" />
       <Item value="Create" priority="0" />
@@ -80,21 +80,21 @@
       <Item value="fullPathSub" priority="0" />
       <Item value="folderPath" priority="0" />
       <Item value="ShowBalloon`0" priority="0" />
-      <Item value="false" priority="5" />
+      <Item value="false" priority="8" />
       <Item value="Process`0" priority="2" />
       <Item value="process" priority="1" />
       <Item value="Length" priority="2" />
       <Item value="null" priority="4" />
       <Item value="syncToolProcess" priority="0" />
       <Item value="args" priority="1" />
-      <Item value="else" priority="7" />
-      <Item value="static" priority="0" />
+      <Item value="else" priority="8" />
+      <Item value="static" priority="1" />
       <Item value="Removesetting`0" priority="0" />
       <Item value="path" priority="0" />
       <Item value="IsAccessible" priority="0" />
       <Item value="Guid`0" priority="0" />
       <Item value="S3Object`0" priority="1" />
-      <Item value="this" priority="6" />
+      <Item value="this" priority="11" />
       <Item value="CheckForIllegalCrossThreadCalls" priority="0" />
       <Item value="s3Object" priority="3" />
       <Item value="UploadMissedFiles`0" priority="1" />
@@ -116,7 +116,7 @@
       <Item value="Amazon" priority="3" />
       <Item value="S3" priority="3" />
       <Item value="AmazonS3`0" priority="2" />
-      <Item value="_amazons3" priority="9" />
+      <Item value="_amazons3" priority="12" />
       <Item value="SetBucketVersioningRequest" priority="0" />
       <Item value="setBucketVersioningRequest" priority="4" />
       <Item value="S3BucketVersioningConfig" priority="1" />
@@ -137,7 +137,7 @@
       <Item value="NativeWindow`0" priority="0" />
       <Item value="Owner" priority="1" />
       <Item value="s3Accesscontrollist" priority="2" />
-      <Item value="key" priority="3" />
+      <Item value="key" priority="6" />
       <Item value="s3Grantee" priority="2" />
       <Item value="CanonicalUser" priority="0" />
       <Item value="EmailAddress" priority="0" />
@@ -151,7 +151,7 @@
       <Item value="ListVersionsRequest`0" priority="0" />
       <Item value="versionsRequest" priority="3" />
       <Item value="VersionId" priority="1" />
-      <Item value="s3ObjectVersion" priority="2" />
+      <Item value="s3ObjectVersion" priority="3" />
       <Item value="getResponse" priority="1" />
       <Item value="connectBtn" priority="1" />
       <Item value="Properties" priority="3" />
@@ -159,8 +159,8 @@
       <Item value="closeWindow" priority="1" />
       <Item value="_mouseDown" priority="1" />
       <Item value="Width" priority="0" />
-      <Item value="Height" priority="0" />
-      <Item value="e" priority="3" />
+      <Item value="Height" priority="2" />
+      <Item value="e" priority="4" />
       <Item value="Left" priority="6" />
       <Item value="Top" priority="2" />
       <Item value="int" priority="0" />
@@ -170,15 +170,15 @@
       <Item value="_top" priority="3" />
       <Item value="Screen`0" priority="0" />
       <Item value="using" priority="0" />
-      <Item value="System" priority="1" />
+      <Item value="System" priority="2" />
       <Item value="Drawing" priority="0" />
       <Item value="VersaVault`0" priority="0" />
       <Item value="Minimized" priority="0" />
-      <Item value="HideForm`0" priority="1" />
+      <Item value="HideForm`0" priority="6" />
       <Item value="Show`0" priority="0" />
       <Item value="ShowForm`0" priority="3" />
       <Item value="_ds" priority="0" />
-      <Item value="Threading" priority="0" />
+      <Item value="Threading" priority="1" />
       <Item value="obj" priority="2" />
       <Item value="fileQ" priority="1" />
       <Item value="_fileQueue" priority="0" />
@@ -186,12 +186,43 @@
       <Item value="while" priority="0" />
       <Item value="_applicationUpates" priority="1" />
       <Item value="S3Object" priority="0" />
-      <Item value="Application`0" priority="0" />
+      <Item value="Application`0" priority="6" />
       <Item value="IFeatureSupport`0" priority="0" />
       <Item value="appUpdateInfo" priority="2" />
       <Item value="ProcessApplicationUpdates`0" priority="11" />
       <Item value="List" priority="1" />
       <Item value="_processingFiles" priority="1" />
+      <Item value="Focus`0" priority="0" />
+      <Item value="BringToFront`0" priority="0" />
+      <Item value="TopMost" priority="1" />
+      <Item value="CloseReason`0" priority="0" />
+      <Item value="TimerView" priority="0" />
+      <Item value="MessageBox`0" priority="4" />
+      <Item value="status" priority="0" />
+      <Item value="DeleteObjectRequest" priority="3" />
+      <Item value="deleteObjectRequest" priority="6" />
+      <Item value="AWSClientFactory`0" priority="0" />
+      <Item value="entry" priority="0" />
+      <Item value="Notification`0" priority="2" />
+      <Item value="notification" priority="3" />
+      <Item value="as" priority="0" />
+      <Item value="wyDay" priority="0" />
+      <Item value="Controls" priority="0" />
+      <Item value="AutomaticUpdater`0" priority="0" />
+      <Item value="LoadSettings`0" priority="0" />
+      <Item value="Timerhide" priority="1" />
+      <Item value="Hide`0" priority="0" />
+      <Item value="Visible" priority="0" />
+      <Item value="Opacity" priority="3" />
+      <Item value="Refresh`0" priority="0" />
+      <Item value="FadeOut`0" priority="0" />
+      <Item value="Dispose`0" priority="0" />
+      <Item value="Environment`0" priority="0" />
+      <Item value="catch" priority="0" />
+      <Item value="Exception`0" priority="0" />
+      <Item value="automatic_updater" priority="1" />
+      <Item value="CheckForUpdates`0" priority="0" />
+      <Item value="StartSilent`0" priority="0" />
     </ItemStatistics>
     <ItemStatistics item="Qualified:@System.String">
       <Item value="IsNullOrEmpty`0" priority="3" />
@@ -238,6 +269,7 @@
       <Item value="Trim`0" priority="4" />
       <Item value="Replace`0" priority="2" />
       <Item value="ToString`0" priority="1" />
+      <Item value="Length" priority="2" />
     </ItemStatistics>
     <ItemStatistics item="Qualified:System.IO.FileInfo">
       <Item value="LastWriteTime" priority="1" />
@@ -270,7 +302,7 @@
       <Item value="Peek`0" priority="0" />
     </ItemStatistics>
     <ItemStatistics item="Qualified:System.Threading.Thread">
-      <Item value="Start`0" priority="0" />
+      <Item value="Start`0" priority="2" />
     </ItemStatistics>
     <ItemStatistics item="Qualified:VersaVaultSyncTool.AppUpdateInfo">
       <Item value="Key" priority="1" />
@@ -279,7 +311,7 @@
     </ItemStatistics>
     <ItemStatistics item="Qualified:@VersaVaultSyncTool.Utilities">
       <Item value="Path" priority="2" />
-      <Item value="MyConfig" priority="11" />
+      <Item value="MyConfig" priority="14" />
       <Item value="AwsAccessKey" priority="0" />
       <Item value="AwsSecretKey" priority="0" />
     </ItemStatistics>
@@ -297,9 +329,11 @@
       <Item value="Create" priority="2" />
       <Item value="Delete" priority="1" />
       <Item value="Update" priority="3" />
+      <Item value="Add" priority="6" />
     </ItemStatistics>
     <ItemStatistics item="Qualified:LitS3.ObjectEntry">
       <Item value="Name" priority="0" />
+      <Item value="Key" priority="0" />
     </ItemStatistics>
     <ItemStatistics item="Qualified:VersaVaultSyncTool.S3Object">
       <Item value="S3_object" priority="1" />
@@ -317,9 +351,9 @@
     <ItemStatistics item="Qualified:VersaVaultSyncTool.Myconfiguration">
       <Item value="Username" priority="0" />
       <Item value="Password" priority="0" />
-      <Item value="BucketKey" priority="4" />
+      <Item value="BucketKey" priority="6" />
       <Item value="Save`0" priority="0" />
-      <Item value="MachineKey" priority="3" />
+      <Item value="MachineKey" priority="4" />
     </ItemStatistics>
     <ItemStatistics item="Qualified:@System.Guid">
       <Item value="NewGuid`0" priority="0" />
@@ -339,12 +373,13 @@
       <Item value="OldFullPath" priority="0" />
     </ItemStatistics>
     <ItemStatistics item="Qualified:@Amazon.AWSClientFactory">
-      <Item value="CreateAmazonS3Client`0" priority="0" />
+      <Item value="CreateAmazonS3Client`0" priority="1" />
     </ItemStatistics>
     <ItemStatistics item="Qualified:Amazon.S3.AmazonS3">
       <Item value="SetBucketVersioning`0" priority="0" />
       <Item value="SetACL`0" priority="1" />
       <Item value="ListVersions`0" priority="0" />
+      <Item value="DeleteObject`0" priority="1" />
     </ItemStatistics>
     <ItemStatistics item="Qualified:Amazon.S3.Model.SetBucketVersioningRequest">
       <Item value="BucketName" priority="0" />
@@ -390,7 +425,7 @@
       <Item value="Versions" priority="0" />
     </ItemStatistics>
     <ItemStatistics item="Qualified:Amazon.S3.Model.S3ObjectVersion">
-      <Item value="VersionId" priority="1" />
+      <Item value="VersionId" priority="2" />
       <Item value="IsDeleteMarker" priority="0" />
     </ItemStatistics>
     <ItemStatistics item="Qualified:Amazon.S3.Model.GetACLResponse">
@@ -401,7 +436,7 @@
       <Item value="Clear`0" priority="0" />
       <Item value="Add`0" priority="0" />
       <Item value="Remove`0" priority="0" />
-      <Item value="Contains`0" priority="0" />
+      <Item value="Contains`0" priority="1" />
     </ItemStatistics>
     <ItemStatistics item="Qualified:System.Windows.Forms.PictureBox">
       <Item value="Image" priority="3" />
@@ -459,51 +494,99 @@
     <ItemStatistics item="Qualified:@Microsoft.Win32.SystemEvents">
       <Item value="SessionSwitch" priority="0" />
       <Item value="SessionEnding" priority="0" />
+      <Item value="SessionEnded" priority="1" />
     </ItemStatistics>
     <ItemStatistics item="Qualified:@System.Windows.Forms.Application">
-      <Item value="Exit`0" priority="0" />
+      <Item value="Exit`0" priority="2" />
+      <Item value="DoEvents`0" priority="1" />
+      <Item value="Restart`0" priority="0" />
+      <Item value="Run`0" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Windows.Forms.FormClosingEventArgs">
+      <Item value="CloseReason" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@System.Windows.Forms.CloseReason">
+      <Item value="None" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@System.Windows.Forms.MessageBox">
+      <Item value="Show`0" priority="3" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:Amazon.S3.Model.DeleteObjectRequest">
+      <Item value="BucketName" priority="0" />
+      <Item value="Key" priority="0" />
+      <Item value="VersionId" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:wyDay.Controls.AutomaticUpdater">
+      <Item value="ForceCheckForUpdate`0" priority="7" />
+      <Item value="Text" priority="0" />
+      <Item value="UpdateStepOn" priority="0" />
+      <Item value="Changes" priority="2" />
+      <Item value="Update`0" priority="4" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:VersaVaultSyncTool.Notification">
+      <Item value="Controls" priority="0" />
+      <Item value="Show`0" priority="2" />
+      <Item value="Close`0" priority="1" />
+      <Item value="Dispose`0" priority="1" />
+      <Item value="ShowDialog`0" priority="3" />
+      <Item value="DesktopLocation" priority="0" />
+      <Item value="ProcessDialogChar`0" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Windows.Forms.Timer">
+      <Item value="Start`0" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:wyDay.Controls.FailArgs">
+      <Item value="ErrorMessage" priority="1" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@System.Threading.Thread">
+      <Item value="Sleep`0" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@System.Environment">
+      <Item value="Exit`0" priority="1" />
     </ItemStatistics>
   </CompletionStatisticsManager>
   <RecentFiles>
     <RecentFiles>
       <File id="8F23007D-7B57-4A2C-89AF-CB313AE1E4DF/f:Program.cs" caret="456" fromTop="17" />
       <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:S3Object.cs" caret="0" fromTop="0" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.Designer.cs" caret="166" fromTop="4" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Program.cs" caret="0" fromTop="0" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.Designer.cs" caret="0" fromTop="0" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="0" fromTop="0" />
       <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Utilities.cs" caret="0" fromTop="0" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="60434" fromTop="15" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Program.cs" caret="371" fromTop="13" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Notification.Designer.cs" caret="1619" fromTop="16" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Notification.cs" caret="2137" fromTop="18" />
     </RecentFiles>
     <RecentEdits>
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="51881" fromTop="30" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="51408" fromTop="24" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="50443" fromTop="8" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="655" fromTop="0" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="51880" fromTop="31" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="50793" fromTop="10" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="51131" fromTop="16" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="51676" fromTop="26" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="14006" fromTop="14" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="14576" fromTop="13" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="16498" fromTop="16" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="18576" fromTop="22" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="18356" fromTop="18" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="22375" fromTop="13" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="22640" fromTop="19" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="25001" fromTop="14" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="28699" fromTop="14" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="31678" fromTop="14" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="33538" fromTop="14" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="42352" fromTop="14" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="41030" fromTop="14" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="43749" fromTop="14" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="44850" fromTop="14" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="49153" fromTop="19" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="49324" fromTop="22" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="855" fromTop="15" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="18457" fromTop="30" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="53108" fromTop="8" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="52943" fromTop="6" />
-      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="60551" fromTop="15" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Notification.cs" caret="1590" fromTop="19" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Notification.cs" caret="1875" fromTop="28" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Notification.cs" caret="1506" fromTop="13" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Notification.cs" caret="2114" fromTop="29" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Notification.cs" caret="1831" fromTop="19" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Notification.cs" caret="2568" fromTop="30" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Notification.cs" caret="2727" fromTop="38" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Notification.cs" caret="2568" fromTop="22" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Notification.cs" caret="2579" fromTop="26" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Program.cs" caret="1292" fromTop="39" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Program.cs" caret="1292" fromTop="22" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Program.cs" caret="2820" fromTop="30" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Notification.cs" caret="2568" fromTop="24" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Notification.cs" caret="2446" fromTop="26" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Program.cs" caret="2820" fromTop="9" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Notification.cs" caret="2372" fromTop="5" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Notification.cs" caret="2368" fromTop="26" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Notification.cs" caret="2727" fromTop="12" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:VersaVault.cs" caret="75442" fromTop="20" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Program.cs" caret="1235" fromTop="26" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Notification.cs" caret="888" fromTop="20" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Notification.cs" caret="1160" fromTop="26" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Notification.cs" caret="1117" fromTop="16" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Program.cs" caret="926" fromTop="28" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Notification.cs" caret="1246" fromTop="6" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Notification.cs" caret="2137" fromTop="14" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Notification.Designer.cs" caret="1721" fromTop="16" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Notification.Designer.cs" caret="974" fromTop="0" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Notification.Designer.cs" caret="1180" fromTop="5" />
+      <File id="9692BC76-1F16-4134-A72D-9CF4A495D7A3/f:Notification.Designer.cs" caret="1619" fromTop="14" />
     </RecentEdits>
   </RecentFiles>
   <NAntValidationSettings>

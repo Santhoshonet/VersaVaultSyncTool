@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Cache;
 using System.Runtime.InteropServices;
@@ -13,6 +14,7 @@ using Amazon;
 using Amazon.S3;
 using Amazon.S3.Model;
 using LitS3;
+using Microsoft.Win32;
 using Newtonsoft.Json;
 using CopyObjectRequest = LitS3.CopyObjectRequest;
 using DeleteObjectRequest = LitS3.DeleteObjectRequest;
@@ -21,6 +23,21 @@ namespace VersaVaultSyncTool
 {
     public partial class VersaVault : Form
     {
+        static void SystemEventsSessionSwitch(object sender, SessionSwitchEventArgs e)
+        {
+            Application.Exit();
+        }
+
+        static void SystemEventsSession(object sender, SessionEndingEventArgs sessionEndingEventArgs)
+        {
+            Application.Exit();
+        }
+
+        static void SystemEventsSessionEnded(object sender, SessionEndedEventArgs e)
+        {
+            Application.Exit();
+        }
+
         readonly DropShadow _ds = new DropShadow();
 
         S3Service _service;
@@ -51,6 +68,9 @@ namespace VersaVaultSyncTool
             Shown += VersaVaultShown;
             Resize += VersaVaultResize;
             LocationChanged += VersaVaultResize;
+            SystemEvents.SessionSwitch += SystemEventsSessionSwitch;
+            SystemEvents.SessionEnding += SystemEventsSession;
+            SystemEvents.SessionEnded += SystemEventsSessionEnded;
         }
 
         private void VersaVaultShown(object sender, EventArgs e)
@@ -98,7 +118,10 @@ namespace VersaVaultSyncTool
                 {
                     Utilities.MyConfig.BucketKey = res.BucketId;
                     if (string.IsNullOrEmpty(Utilities.MyConfig.MachineKey))
+                    {
                         Utilities.MyConfig.MachineKey = Guid.NewGuid().ToString();
+                        // MessageBox.Show(Utilities.MyConfig.MachineKey);
+                    }
                     Utilities.MyConfig.Save();
                     StartSync();
                     return;
@@ -166,7 +189,7 @@ namespace VersaVaultSyncTool
                                    UseSubdomains = true
                                };
 
-                _amazons3 = AWSClientFactory.CreateAmazonS3Client(Utilities.AwsAccessKey, Utilities.AwsSecretKey, new AmazonS3Config() { CommunicationProtocol = Protocol.HTTP });
+                _amazons3 = AWSClientFactory.CreateAmazonS3Client(Utilities.AwsAccessKey, Utilities.AwsSecretKey, new AmazonS3Config { CommunicationProtocol = Protocol.HTTP });
 
                 _service.AddObjectProgress += ServiceAddObjectProgress;
                 _service.GetObjectProgress += ServiceGetObjectProgress;
@@ -216,7 +239,7 @@ namespace VersaVaultSyncTool
             try
             {
                 var setBucketVersioningRequest = new SetBucketVersioningRequest { BucketName = Utilities.MyConfig.BucketKey };
-                var versionConfig = new S3BucketVersioningConfig() { Status = "Enabled" };
+                var versionConfig = new S3BucketVersioningConfig { Status = "Enabled" };
                 setBucketVersioningRequest.VersioningConfig = versionConfig;
                 var response = _amazons3.SetBucketVersioning(setBucketVersioningRequest);
                 if (string.IsNullOrEmpty(response.AmazonId2))
@@ -274,11 +297,18 @@ namespace VersaVaultSyncTool
 
         private void VersaVaultFormClosing(object sender, FormClosingEventArgs e)
         {
-            e.Cancel = true;
-            Opacity = 0;
-            if (string.IsNullOrEmpty(Utilities.MyConfig.BucketKey))
-                startSyncToolStripMenuItem.Text = "Start sync";
-            Application.DoEvents();
+            if (e.CloseReason == CloseReason.None)
+            {
+                e.Cancel = true;
+                Opacity = 0;
+                if (string.IsNullOrEmpty(Utilities.MyConfig.BucketKey))
+                    startSyncToolStripMenuItem.Text = "Start sync";
+                Application.DoEvents();
+            }
+            else
+            {
+                Application.Exit();
+            }
         }
 
         private void VersaVaultFormClosed(object sender, FormClosedEventArgs e)
@@ -474,6 +504,40 @@ namespace VersaVaultSyncTool
             }
         }
 
+        private void DeleteObjectVersions(string key)
+        {
+            try
+            {
+                var versionsRequest = new ListVersionsRequest
+                                          {
+                                              BucketName = Utilities.MyConfig.BucketKey,
+                                              Prefix = key
+                                          };
+                var result = _amazons3.ListVersions(versionsRequest);
+                foreach (S3ObjectVersion s3ObjectVersion in result.Versions)
+                {
+                    try
+                    {
+                        var deleteObjectRequest = new Amazon.S3.Model.DeleteObjectRequest
+                                                      {
+                                                          BucketName = Utilities.MyConfig.BucketKey,
+                                                          Key = key,
+                                                          VersionId = s3ObjectVersion.VersionId
+                                                      };
+                        _amazons3.DeleteObject(deleteObjectRequest);
+                    }
+                    catch (Exception)
+                    {
+                        // ToDo
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // ToDo
+            }
+        }
+
         private void SetAcltoObject(string key)
         {
             try
@@ -588,6 +652,7 @@ namespace VersaVaultSyncTool
                         {
                             var removeobject = new DeleteObjectRequest(_service, Utilities.MyConfig.BucketKey, entry.Key);
                             removeobject.GetResponse();
+                            DeleteObjectVersions(entry.Key);
                         }
                         catch (Exception)
                         {
@@ -595,6 +660,7 @@ namespace VersaVaultSyncTool
                             {
                                 var removeobject = new DeleteObjectRequest(_service, Utilities.MyConfig.BucketKey, entry.Name);
                                 removeobject.GetResponse();
+                                DeleteObjectVersions(entry.Name);
                             }
                             catch (Exception) { }
                         }
@@ -683,9 +749,9 @@ namespace VersaVaultSyncTool
                                                 if (Math.Floor(timeSpan.TotalSeconds) != 0)
                                                 {
                                                     string relativePath = fullPath.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
-                                                    ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new DirectoryInfo(fullPath).LastWriteTime, Status = UpdateStatus.Update });
                                                     //_applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new DirectoryInfo(fullPath).LastWriteTime, Status = UpdateStatus.Update });
                                                     DownloadFolder(s3Obj);
+                                                    ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new DirectoryInfo(fullPath).LastWriteTime, Status = UpdateStatus.Add });
                                                 }
                                             }
                                             catch (Exception)
@@ -726,7 +792,7 @@ namespace VersaVaultSyncTool
                                                 _downloadObjects.Add(fullPath);
                                                 _service.GetObject(Utilities.MyConfig.BucketKey, s3Obj.Key, fullPath);
                                                 string relativePath = fullPath.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
-                                                ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPath).LastWriteTime, Status = UpdateStatus.Update });
+                                                ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPath).LastWriteTime, Status = UpdateStatus.Add });
                                                 //_applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPath).LastWriteTime, Status = UpdateStatus.Update });
                                             }
                                             catch (Exception)
@@ -747,7 +813,7 @@ namespace VersaVaultSyncTool
                                                         _downloadObjects.Add(fullPath);
                                                         _service.GetObject(Utilities.MyConfig.BucketKey, s3Obj.Key, fullPath);
                                                         string relativePath = fullPath.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
-                                                        ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPath).LastWriteTime, Status = UpdateStatus.Update });
+                                                        ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPath).LastWriteTime, Status = UpdateStatus.Add });
                                                         //_applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPath).LastWriteTime, Status = UpdateStatus.Update });
                                                     }
                                                 }
@@ -809,16 +875,11 @@ namespace VersaVaultSyncTool
             // files first
             foreach (string file in Directory.GetFiles(path))
             {
-                bool isFilefound = false;
-                foreach (S3Object s3Object in s3Objects)
-                {
-                    string filename = file.Replace(Utilities.Path + "\\", "");
-                    if (s3Object != null && !s3Object.Folder && s3Object.Key.Replace("/", "\\").ToLower().Trim() == filename.Trim().ToLower())
-                    {
-                        isFilefound = true;
-                        break;
-                    }
-                }
+                string file1 = file;
+                bool isFilefound = (from s3Object in s3Objects
+                                    let filename = file1.Replace(Utilities.Path + "\\", "")
+                                    where s3Object != null && !s3Object.Folder && s3Object.Key.Replace("/", "\\").ToLower().Trim() == filename.Trim().ToLower()
+                                    select s3Object).Any();
                 if (!isFilefound && new FileInfo(file).Length != 0)
                     Addobject(file);
             }
@@ -891,7 +952,7 @@ namespace VersaVaultSyncTool
                                             _downloadObjects.Add(fullPathSub);
                                             DownloadFolder(s3ObjSub);
                                             string relativePath = fullPathSub.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
-                                            ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Update });
+                                            ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Add });
                                             //_applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Update });
                                         }
                                     }
@@ -909,7 +970,7 @@ namespace VersaVaultSyncTool
                                     _downloadObjects.Add(fullPathSub);
                                     _service.GetObject(Utilities.MyConfig.BucketKey, s3ObjSub.Key, fullPathSub);
                                     string relativePath = fullPathSub.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
-                                    ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Update });
+                                    ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Add });
                                     //_applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Update });
                                 }
                                 else
@@ -924,7 +985,7 @@ namespace VersaVaultSyncTool
                                                 _downloadObjects.Add(fullPathSub);
                                                 _service.GetObject(Utilities.MyConfig.BucketKey, s3ObjSub.Key, fullPathSub);
                                                 string relativePath = fullPathSub.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
-                                                ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Update });
+                                                ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Add });
                                                 //_applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Update });
                                             }
                                         }
@@ -947,7 +1008,7 @@ namespace VersaVaultSyncTool
             }
             finally
             {
-                ProcessApplicationUpdates(new AppUpdateInfo { Key = s3Obj.Key, LastModifiedTime = new DirectoryInfo(fullPath).LastWriteTime, Status = UpdateStatus.Update });
+                ProcessApplicationUpdates(new AppUpdateInfo { Key = s3Obj.Key, LastModifiedTime = new DirectoryInfo(fullPath).LastWriteTime, Status = UpdateStatus.Add });
                 //_applicationUpates.Enqueue(new AppUpdateInfo { Key = s3Obj.Key, LastModifiedTime = new DirectoryInfo(fullPath).LastWriteTime, Status = UpdateStatus.Update });
             }
         }
@@ -961,21 +1022,21 @@ namespace VersaVaultSyncTool
                 {
                     if (bytesTotal >= 1048576)
                     {
-                        var completed = Math.Round(Convert.ToDouble(bytesTransferred / 1048576), 2);
-                        var total = Math.Round(Convert.ToDouble(bytesTotal / 1048576), 2);
-                        var percentage = Math.Round((completed / total) * 100, 0);
-                        if (percentage != 0 && percentage % 3 == 0 && !_syncStatusDictionary.Contains(key + "_" + percentage))
+                        var completed = Math.Round(Convert.ToDouble(bytesTransferred / 1048576), 4);
+                        var total = Math.Round(Convert.ToDouble(bytesTotal / 1048576), 4);
+                        var percentage = Math.Round((completed / total) * 100, 2);
+                        if (percentage != 0 && percentage % 20 == 0 && !_syncStatusDictionary.Contains(key + "_" + percentage))
                         {
                             _syncStatusDictionary.Add(key + "_" + percentage);
                             value = status + " " + completed + "MB out of  " + total + "MB - " + key;
                         }
                     }
-                    else if (bytesTotal >= 1024)
+                    /*else if (bytesTotal >= 1024)
                     {
                         var completed = Math.Round(Convert.ToDouble(bytesTransferred / 1024), 2);
                         var total = Math.Round(Convert.ToDouble(bytesTotal / 1024), 2);
                         var percentage = Math.Round((completed / total) * 100, 0);
-                        if (percentage != 0 && percentage % 10 == 0 && !_syncStatusDictionary.Contains(key + "_" + percentage))
+                        if (percentage != 0 && percentage % 50 == 0 && !_syncStatusDictionary.Contains(key + "_" + percentage))
                         {
                             _syncStatusDictionary.Add(key + "_" + percentage);
                             value = status + " " + completed + "KB out of  " + total + "KB - " + key;
@@ -984,12 +1045,12 @@ namespace VersaVaultSyncTool
                     else
                     {
                         var percentage = Math.Round(Convert.ToDouble(bytesTransferred / bytesTotal) * 100, 0);
-                        if (percentage % 25 == 0 && !_syncStatusDictionary.Contains(key + "_" + percentage))
+                        if (percentage % 99 == 0 && !_syncStatusDictionary.Contains(key + "_" + percentage))
                         {
                             _syncStatusDictionary.Add(key + "_" + percentage);
                             value = status + " " + bytesTransferred + "Bytes out of  " + bytesTotal + "Bytes - " + key;
                         }
-                    }
+                    }*/
                 }
                 else
                 {
@@ -1079,6 +1140,15 @@ namespace VersaVaultSyncTool
                 string url = Utilities.DevelopmentMode ? "http://localhost:3000" : "http://versavault.com";
                 switch (appUpdateInfo.Status)
                 {
+                    case UpdateStatus.Add:
+                        {
+                            url += "/api/add_files?bucket_key=" + Utilities.MyConfig.BucketKey + "&key=" +
+                                   appUpdateInfo.Key + "&last_modified=" +
+                                   appUpdateInfo.LastModifiedTime.ToUniversalTime().ToString(
+                                       "yyyy-MM-dd HH:mm:ss tt") + "&machine_key=" +
+                                   Utilities.MyConfig.MachineKey;
+                            break;
+                        }
                     case UpdateStatus.Update:
                         {
                             url += "/api/update_files?bucket_key=" + Utilities.MyConfig.BucketKey + "&key=" +
@@ -1086,18 +1156,16 @@ namespace VersaVaultSyncTool
                                    appUpdateInfo.LastModifiedTime.ToUniversalTime().ToString(
                                        "yyyy-MM-dd HH:mm:ss tt") + "&machine_key=" +
                                    Utilities.MyConfig.MachineKey;
-                            GetResponse(url);
-
                             break;
                         }
                     case UpdateStatus.Delete:
                         {
                             url += "/api/delete_files?bucket_key=" + Utilities.MyConfig.BucketKey + "&key=" +
                                    appUpdateInfo.Key + "&machine_key=" + Utilities.MyConfig.MachineKey;
-                            GetResponse(url);
                             break;
                         }
                 }
+                GetResponse(url);
                 //}
             }
             catch (Exception)
@@ -1364,7 +1432,7 @@ namespace VersaVaultSyncTool
             return;
         }
 
-        private void closeWindow_Click(object sender, EventArgs e)
+        private void CloseWindowClick(object sender, EventArgs e)
         {
             HideForm();
         }
@@ -1381,6 +1449,13 @@ namespace VersaVaultSyncTool
             Application.DoEvents();
             WindowState = FormWindowState.Normal;
             Application.DoEvents();
+            TopMost = true;
+            Application.DoEvents();
+            Focus();
+            Application.DoEvents();
+            BringToFront();
+            Application.DoEvents();
+            TopMost = false;
         }
 
         private void HideForm()
@@ -1397,51 +1472,56 @@ namespace VersaVaultSyncTool
             Application.DoEvents();
         }
 
-        private void closeWindow_MouseLeave(object sender, EventArgs e)
+        private void CloseWindowMouseLeave(object sender, EventArgs e)
         {
             closeWindow.Image = Properties.Resources.closeDefault;
         }
 
-        private void closeWindow_MouseEnter(object sender, EventArgs e)
+        private void CloseWindowMouseEnter(object sender, EventArgs e)
         {
             closeWindow.Image = Properties.Resources.closeHover;
         }
 
         //const and dll functions for moving form
-        public const int WM_NCLBUTTONDOWN = 0xA1;
-        public const int HT_CAPTION = 0x2;
+        public const int WmNclbuttondown = 0xA1;
+        public const int HtCaption = 0x2;
 
         [DllImport("user32.dll")]
-        public static extern int SendMessage(IntPtr hWnd,
-            int Msg, int wParam, int lParam);
+        public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
 
         [DllImportAttribute("user32.dll")]
         public static extern bool ReleaseCapture();
 
-        private void pictureBox1_MouseDown(object sender, MouseEventArgs e)
+        private void PictureBox1MouseDown(object sender, MouseEventArgs e)
         {
             ReleaseCapture();
-            SendMessage(Handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
+            SendMessage(Handle, WmNclbuttondown, HtCaption, 0);
         }
 
-        private void connectBtn_MouseEnter(object sender, EventArgs e)
+        private void ConnectBtnMouseEnter(object sender, EventArgs e)
         {
             connectBtn.Image = Properties.Resources.connectButton_Hover;
         }
 
-        private void connectBtn_MouseLeave(object sender, EventArgs e)
+        private void ConnectBtnMouseLeave(object sender, EventArgs e)
         {
             connectBtn.Image = Properties.Resources.connectButton_Normal;
         }
 
-        private void connectBtn_MouseDown(object sender, MouseEventArgs e)
+        private void ConnectBtnMouseDown(object sender, MouseEventArgs e)
         {
             connectBtn.Image = Properties.Resources.connectButton_Activel;
         }
 
-        private void connectBtn_MouseUp(object sender, MouseEventArgs e)
+        private void ConnectBtnMouseUp(object sender, MouseEventArgs e)
         {
             connectBtn.Image = Properties.Resources.connectButton_Hover;
+        }
+
+        private void checkForUpdatesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var notification = new Notification();
+            notification.Show();
         }
     }
 
@@ -1469,6 +1549,7 @@ namespace VersaVaultSyncTool
 
     enum UpdateStatus
     {
+        Add,
         Update,
         Delete
     }

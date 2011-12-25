@@ -36,6 +36,7 @@
             this.startToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.settingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.startSyncToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.checkForUpdatesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripSeparator();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this._watchFolder = new System.IO.FileSystemWatcher();
@@ -83,11 +84,12 @@
             this.startToolStripMenuItem,
             this.settingsToolStripMenuItem,
             this.startSyncToolStripMenuItem,
+            this.checkForUpdatesToolStripMenuItem,
             this.toolStripMenuItem1,
             this.exitToolStripMenuItem});
             this.contextMenuStrip.Name = "contextMenuStrip";
             this.contextMenuStrip.RenderMode = System.Windows.Forms.ToolStripRenderMode.System;
-            this.contextMenuStrip.Size = new System.Drawing.Size(262, 98);
+            this.contextMenuStrip.Size = new System.Drawing.Size(262, 142);
             // 
             // startToolStripMenuItem
             // 
@@ -115,6 +117,13 @@
             this.startSyncToolStripMenuItem.Size = new System.Drawing.Size(261, 22);
             this.startSyncToolStripMenuItem.Text = "Start Sync";
             this.startSyncToolStripMenuItem.Click += new System.EventHandler(this.StartSyncToolStripMenuItemClick);
+            // 
+            // checkForUpdatesToolStripMenuItem
+            // 
+            this.checkForUpdatesToolStripMenuItem.Name = "checkForUpdatesToolStripMenuItem";
+            this.checkForUpdatesToolStripMenuItem.Size = new System.Drawing.Size(261, 22);
+            this.checkForUpdatesToolStripMenuItem.Text = "Check for updates";
+            this.checkForUpdatesToolStripMenuItem.Click += new System.EventHandler(this.checkForUpdatesToolStripMenuItem_Click);
             // 
             // toolStripMenuItem1
             // 
@@ -148,11 +157,11 @@
             this.connectBtn.Size = new System.Drawing.Size(177, 45);
             this.connectBtn.TabIndex = 19;
             this.connectBtn.TabStop = false;
-            this.connectBtn.MouseLeave += new System.EventHandler(this.connectBtn_MouseLeave);
+            this.connectBtn.MouseLeave += new System.EventHandler(this.ConnectBtnMouseLeave);
             this.connectBtn.Click += new System.EventHandler(this.BtnAuthenticateClick);
-            this.connectBtn.MouseDown += new System.Windows.Forms.MouseEventHandler(this.connectBtn_MouseDown);
-            this.connectBtn.MouseUp += new System.Windows.Forms.MouseEventHandler(this.connectBtn_MouseUp);
-            this.connectBtn.MouseEnter += new System.EventHandler(this.connectBtn_MouseEnter);
+            this.connectBtn.MouseDown += new System.Windows.Forms.MouseEventHandler(this.ConnectBtnMouseDown);
+            this.connectBtn.MouseUp += new System.Windows.Forms.MouseEventHandler(this.ConnectBtnMouseUp);
+            this.connectBtn.MouseEnter += new System.EventHandler(this.ConnectBtnMouseEnter);
             // 
             // TxtPassword
             // 
@@ -227,9 +236,9 @@
             this.closeWindow.Size = new System.Drawing.Size(12, 12);
             this.closeWindow.TabIndex = 12;
             this.closeWindow.TabStop = false;
-            this.closeWindow.MouseLeave += new System.EventHandler(this.closeWindow_MouseLeave);
-            this.closeWindow.Click += new System.EventHandler(this.closeWindow_Click);
-            this.closeWindow.MouseEnter += new System.EventHandler(this.closeWindow_MouseEnter);
+            this.closeWindow.MouseLeave += new System.EventHandler(this.CloseWindowMouseLeave);
+            this.closeWindow.Click += new System.EventHandler(this.CloseWindowClick);
+            this.closeWindow.MouseEnter += new System.EventHandler(this.CloseWindowMouseEnter);
             // 
             // pictureBox2
             // 
@@ -240,7 +249,7 @@
             this.pictureBox2.Size = new System.Drawing.Size(400, 4);
             this.pictureBox2.TabIndex = 11;
             this.pictureBox2.TabStop = false;
-            this.pictureBox2.MouseDown += new System.Windows.Forms.MouseEventHandler(this.pictureBox1_MouseDown);
+            this.pictureBox2.MouseDown += new System.Windows.Forms.MouseEventHandler(this.PictureBox1MouseDown);
             // 
             // pictureBox1
             // 
@@ -251,7 +260,7 @@
             this.pictureBox1.Size = new System.Drawing.Size(100, 30);
             this.pictureBox1.TabIndex = 10;
             this.pictureBox1.TabStop = false;
-            this.pictureBox1.MouseDown += new System.Windows.Forms.MouseEventHandler(this.pictureBox1_MouseDown);
+            this.pictureBox1.MouseDown += new System.Windows.Forms.MouseEventHandler(this.PictureBox1MouseDown);
             // 
             // VersaVault
             // 
@@ -315,5 +324,6 @@
         private System.Windows.Forms.PictureBox closeWindow;
         private System.Windows.Forms.PictureBox pictureBox2;
         private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.ToolStripMenuItem checkForUpdatesToolStripMenuItem;
     }
 }

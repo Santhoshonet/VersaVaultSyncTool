@@ -18,6 +18,7 @@ namespace VersaVaultSyncTool
         {
             SystemEvents.SessionSwitch += SystemEventsSessionSwitch;
             SystemEvents.SessionEnding += SystemEventsSession;
+            SystemEvents.SessionEnded += SystemEventsSessionEnded;
             if (args.Length == 0)
             {
                 bool isthisNewApp;
@@ -25,9 +26,12 @@ namespace VersaVaultSyncTool
                 {
                     if (isthisNewApp)
                     {
+                        MessageBox.Show("Updated");
                         Application.EnableVisualStyles();
                         Application.SetCompatibleTextRenderingDefault(false);
-                        Application.Run(new VersaVault());
+                        var notification = new Notification();
+                        notification.ShowDialog();
+                        //Application.Run(new VersaVault());
                     }
                     else
                     {
@@ -57,6 +61,11 @@ namespace VersaVaultSyncTool
                     return;
                 }
             }
+        }
+
+        static void SystemEventsSessionEnded(object sender, SessionEndedEventArgs e)
+        {
+            Application.Exit();
         }
 
         static void SystemEventsSessionSwitch(object sender, SessionSwitchEventArgs e)

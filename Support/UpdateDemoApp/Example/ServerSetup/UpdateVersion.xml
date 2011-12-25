@@ -1,0 +1,7 @@
+<VersionConfig>
+
+	<AvailableVersion>1.0.0.2</AvailableVersion>
+	<AppFileURL>http://localhost/app.zip</AppFileURL>
+	<LatestChanges>Updated Background Color</LatestChanges>
+	<ChangeLogURL>http://localhost/change_log.htm</ChangeLogURL>
+</VersionConfig>
