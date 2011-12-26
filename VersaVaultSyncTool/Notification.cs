@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
-using System.IO;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -19,25 +17,6 @@ namespace VersaVaultSyncTool
             int screenHeight = Screen.PrimaryScreen.WorkingArea.Height;
             Left = screenWidth - Width - 5;
             Top = screenHeight - Height;
-            FadeIn();
-            //automaticUpdater1.ForceCheckForUpdate(true);
-            var thread = new Thread(StartSilent);
-            thread.Start();
-            // Compute the updater.exe path relative to the application main module path
-            updaterModulePath = Path.Combine(Application.StartupPath, "updater.exe");
-        }
-
-        private static void StartSilent()
-        {
-            Thread.Sleep(10000);
-            Process process = Process.Start(updaterModulePath, "/silentall");
-            if (process != null) process.Close();
-        }
-
-        private static String updaterModulePath;
-
-        private void automaticUpdater1_ClosingAborted(object sender, EventArgs e)
-        {
             HideForm();
         }
 
@@ -70,28 +49,6 @@ namespace VersaVaultSyncTool
                 Refresh();
                 Thread.Sleep(100);
             }
-        }
-
-        private void automaticUpdater1_ReadyToBeInstalled(object sender, EventArgs e)
-        {
-            try
-            {
-                Application.Exit();
-                Process.Start(Application.StartupPath + "\\wyUpdate.exe");
-            }
-            catch (Exception)
-            {
-            }
-        }
-
-        private void automaticUpdater1_UpdateAvailable(object sender, EventArgs e)
-        {
-            HideForm();
-        }
-
-        private void automaticUpdater1_Cancelled(object sender, EventArgs e)
-        {
-            HideForm();
         }
     }
 }

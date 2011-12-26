@@ -17,3 +17,5 @@ C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSync
 C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\VersaVaultSyncTool\obj\Debug\VersaVaultSyncTool.exe
 C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\VersaVaultSyncTool\obj\Debug\VersaVaultSyncTool.pdb
 C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\VersaVaultSyncTool\bin\Debug\VersaVaultSyncTool.pdb
+C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\VersaVaultSyncTool\bin\Debug\VersaVaultLibrary.dll
+C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\VersaVaultSyncTool\bin\Debug\VersaVaultLibrary.pdb

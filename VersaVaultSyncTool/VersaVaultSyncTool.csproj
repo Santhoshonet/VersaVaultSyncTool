@@ -83,6 +83,10 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
+    <Reference Include="VersaVaultLibrary, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\VersaVaultLibrary\bin\Debug\VersaVaultLibrary.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Control.cs">
@@ -128,7 +132,6 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <Compile Include="S3Object.cs" />
-    <Compile Include="Utilities.cs" />
     <Compile Include="VersaVault.cs">
       <SubType>Form</SubType>
     </Compile>

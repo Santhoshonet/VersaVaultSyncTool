@@ -11,14 +11,14 @@
     <deploymentProvider codebase="http://s3.amazonaws.com/VersaVault/VersaVaultSyncTool.application" />
   </deployment>
   <dependency>
-    <dependentAssembly dependencyType="install" codebase="VersaVaultSyncTool.exe.manifest" size="6681">
+    <dependentAssembly dependencyType="install" codebase="VersaVaultSyncTool.exe.manifest" size="6647">
       <assemblyIdentity name="VersaVaultSyncTool.exe" version="1.0.0.5" publicKeyToken="0000000000000000" language="neutral" processorArchitecture="msil" type="win32" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" />
-        <dsig:DigestValue>gG+DOtG8EBE+c9dwmzz5l2sTW6E=</dsig:DigestValue>
+        <dsig:DigestValue>6hxDBoPyK/JtvgLv+OQPbiiqLHQ=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>

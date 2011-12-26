@@ -2,5 +2,8 @@
   <Module PersistentId="9692BC76-1F16-4134-A72D-9CF4A495D7A3" ModuleId="VersaVaultSyncTool" />
   <Module PersistentId="d:Miscellaneous Files" ModuleId="System.Drawing" />
   <Module PersistentId="8F23007D-7B57-4A2C-89AF-CB313AE1E4DF" ModuleId="Uninstaller" />
-  <Module PersistentId="BC5FFFBC-86B6-4969-9D44-5C367ED849F8" ModuleId="IShellIcon" />
+  <Module PersistentId="System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" ModuleId="System.Windows.Forms" />
+  <Module PersistentId="System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" ModuleId="System.Drawing_1" />
+  <Module PersistentId="C0D6AEF9-B335-426D-AEEC-33855A4F5F21" ModuleId="VersaVaultUpdater" />
+  <Module PersistentId="7BF5031B-58F0-4B5F-8696-2B2C6091506E" ModuleId="VersaVaultLibrary" />
 </Modules>

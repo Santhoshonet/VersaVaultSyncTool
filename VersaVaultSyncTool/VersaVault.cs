@@ -16,6 +16,7 @@ using Amazon.S3.Model;
 using LitS3;
 using Microsoft.Win32;
 using Newtonsoft.Json;
+using VersaVaultLibrary;
 using CopyObjectRequest = LitS3.CopyObjectRequest;
 using DeleteObjectRequest = LitS3.DeleteObjectRequest;
 
