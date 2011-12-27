@@ -12,7 +12,7 @@ using VersaVaultLibrary;
 
 namespace VersaVaultSyncTool
 {
-    static class Program
+    public static class Program
     {
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
@@ -91,7 +91,7 @@ namespace VersaVaultSyncTool
             Application.Exit();
         }
 
-        static bool CheckVersion()
+        public static bool CheckVersion()
         {
             // first check the last updated date
             var needtoUpdate = false;
@@ -107,7 +107,7 @@ namespace VersaVaultSyncTool
             {
                 var amazons3 = AWSClientFactory.CreateAmazonS3Client(Utilities.AwsAccessKey, Utilities.AwsSecretKey,
                                                                      new AmazonS3Config { CommunicationProtocol = Protocol.HTTP });
-                var listVersionRequest = new ListVersionsRequest() { BucketName = "VersaVault", Prefix = "VersaVaultSyncTool.exe" };
+                var listVersionRequest = new ListVersionsRequest { BucketName = "VersaVault", Prefix = "VersaVaultSyncTool.exe" };
                 foreach (var s3ObjectVersion in amazons3.ListVersions(listVersionRequest).Versions)
                 {
                     if (s3ObjectVersion.IsLatest)
@@ -128,17 +128,14 @@ namespace VersaVaultSyncTool
                             Utilities.MyConfig.Save();
                             return true;
                         }
-                        else
-                        {
-                            // enable bucker versioning
-                            var setBucketVersioning = new SetBucketVersioningRequest
-                                                          {
-                                                              BucketName = "VersaVault",
-                                                              VersioningConfig =
-                                                                  new S3BucketVersioningConfig() { Status = "Enabled" }
-                                                          };
-                            amazons3.SetBucketVersioning(setBucketVersioning);
-                        }
+                        // enable bucker versioning
+                        var setBucketVersioning = new SetBucketVersioningRequest
+                                                      {
+                                                          BucketName = "VersaVault",
+                                                          VersioningConfig =
+                                                              new S3BucketVersioningConfig { Status = "Enabled" }
+                                                      };
+                        amazons3.SetBucketVersioning(setBucketVersioning);
                         break;
                     }
                 }

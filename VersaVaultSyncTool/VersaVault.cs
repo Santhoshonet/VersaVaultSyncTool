@@ -747,12 +747,18 @@ namespace VersaVaultSyncTool
                                             try
                                             {
                                                 TimeSpan timeSpan = new DirectoryInfo(fullPath).LastWriteTime.Subtract(s3Obj.LastModified);
-                                                if (Math.Floor(timeSpan.TotalSeconds) != 0)
+                                                var seconds = Math.Floor(timeSpan.TotalSeconds);
+                                                if (seconds != 0)
                                                 {
-                                                    string relativePath = fullPath.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
-                                                    //_applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new DirectoryInfo(fullPath).LastWriteTime, Status = UpdateStatus.Update });
-                                                    DownloadFolder(s3Obj);
-                                                    ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new DirectoryInfo(fullPath).LastWriteTime, Status = UpdateStatus.Add });
+                                                    if (seconds < 0)
+                                                    {
+                                                        string relativePath = fullPath.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
+                                                        //_applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new DirectoryInfo(fullPath).LastWriteTime, Status = UpdateStatus.Update });
+                                                        DownloadFolder(s3Obj);
+                                                        ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new DirectoryInfo(fullPath).LastWriteTime, Status = UpdateStatus.Add });
+                                                    }
+                                                    //else
+                                                    //  Uploadfiles(fullPath); // need to figure it out how to do this case, we cannot upload the entire folder
                                                 }
                                             }
                                             catch (Exception)
@@ -786,7 +792,7 @@ namespace VersaVaultSyncTool
                                 {
                                     if (s3Obj.Status)
                                     {
-                                        if (!File.Exists(fullPath))
+                                        if (!File.Exists(fullPath)) // file is not available here , so download
                                         {
                                             try
                                             {
@@ -809,13 +815,20 @@ namespace VersaVaultSyncTool
                                                 if (!IsFileUsedbyAnotherProcess(fullPath))
                                                 {
                                                     TimeSpan timeSpan = new FileInfo(fullPath).LastWriteTime.Subtract(s3Obj.LastModified);
-                                                    if (Math.Floor(timeSpan.TotalSeconds) != 0)
+                                                    var seconds = Math.Floor(timeSpan.TotalSeconds);
+                                                    if (seconds != 0)
                                                     {
-                                                        _downloadObjects.Add(fullPath);
-                                                        _service.GetObject(Utilities.MyConfig.BucketKey, s3Obj.Key, fullPath);
-                                                        string relativePath = fullPath.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
-                                                        ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPath).LastWriteTime, Status = UpdateStatus.Add });
-                                                        //_applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPath).LastWriteTime, Status = UpdateStatus.Update });
+                                                        if (seconds < 0)
+                                                        {
+                                                            // download the latest from server
+                                                            _downloadObjects.Add(fullPath);
+                                                            _service.GetObject(Utilities.MyConfig.BucketKey, s3Obj.Key, fullPath);
+                                                            string relativePath = fullPath.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
+                                                            ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPath).LastWriteTime, Status = UpdateStatus.Add });
+                                                            //_applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPath).LastWriteTime, Status = UpdateStatus.Update });
+                                                        }
+                                                        else // Upload the latest to server
+                                                            Addobject(fullPath);
                                                     }
                                                 }
                                             }
@@ -836,7 +849,7 @@ namespace VersaVaultSyncTool
                                                 TimeSpan timeSpan = new FileInfo(fullPath).LastWriteTime.Subtract(s3Obj.LastModified);
                                                 if (Math.Floor(timeSpan.TotalSeconds) < 1)
                                                     File.Delete(fullPath);
-                                                else
+                                                else // upload the latest to server
                                                     Addobject(fullPath);
                                             }
                                         }
@@ -948,13 +961,19 @@ namespace VersaVaultSyncTool
                                     try
                                     {
                                         TimeSpan timeSpan = new DirectoryInfo(fullPathSub).LastWriteTime.Subtract(s3ObjSub.LastModified);
-                                        if (Math.Floor(timeSpan.TotalSeconds) != 0)
+                                        var seconds = Math.Floor(timeSpan.TotalSeconds);
+                                        if (seconds != 0)
                                         {
-                                            _downloadObjects.Add(fullPathSub);
-                                            DownloadFolder(s3ObjSub);
-                                            string relativePath = fullPathSub.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
-                                            ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Add });
-                                            //_applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Update });
+                                            if (seconds < 0)
+                                            {
+                                                _downloadObjects.Add(fullPathSub);
+                                                DownloadFolder(s3ObjSub);
+                                                string relativePath = fullPathSub.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
+                                                ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Add });
+                                                //_applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Update });
+                                            }
+                                            //else
+                                            //   Uploadfiles(fullPathSub); // need to figure it out how to do this beacause we cannot upload the entire folder here
                                         }
                                     }
                                     catch (Exception)
@@ -981,13 +1000,19 @@ namespace VersaVaultSyncTool
                                         if (!IsFileUsedbyAnotherProcess(fullPathSub))
                                         {
                                             TimeSpan timeSpan = new FileInfo(fullPathSub).LastWriteTime.Subtract(s3ObjSub.LastModified);
-                                            if (Math.Floor(timeSpan.TotalSeconds) != 0)
+                                            var seconds = Math.Floor(timeSpan.TotalSeconds);
+                                            if (seconds != 0)
                                             {
-                                                _downloadObjects.Add(fullPathSub);
-                                                _service.GetObject(Utilities.MyConfig.BucketKey, s3ObjSub.Key, fullPathSub);
-                                                string relativePath = fullPathSub.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
-                                                ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Add });
-                                                //_applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Update });
+                                                if (seconds < 0)
+                                                {
+                                                    _downloadObjects.Add(fullPathSub);
+                                                    _service.GetObject(Utilities.MyConfig.BucketKey, s3ObjSub.Key, fullPathSub);
+                                                    string relativePath = fullPathSub.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
+                                                    ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Add });
+                                                    //_applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Update });
+                                                }
+                                                else
+                                                    Addobject(fullPathSub);
                                             }
                                         }
                                     }
@@ -1291,60 +1316,73 @@ namespace VersaVaultSyncTool
                                 var attribute = File.GetAttributes(fullPath);
                                 if (attribute != (FileAttributes.Archive | FileAttributes.Hidden))
                                 {
-                                    if (attribute != FileAttributes.Directory && !_processingFiles.Contains(fullPath))
+                                    if (attribute != FileAttributes.Directory)
                                     {
-                                        if (!IsFileUsedbyAnotherProcess(fullPath) && new FileInfo(fullPath).Length != 0)
+                                        if (!_processingFiles.Contains(fullPath))
                                         {
-                                            // get the file last modified from database
-                                            string relativePath = fullPath.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
-                                            string url = Utilities.DevelopmentMode ? "http://localhost:3000" : "http://versavault.com";
-                                            url += "/api/get_object_status?bucket_key=" + Utilities.MyConfig.BucketKey + "&key=" + relativePath + "&machine_key=" + Utilities.MyConfig.MachineKey;
-                                            string result = GetResponse(url);
-                                            if (!string.IsNullOrEmpty(result))
+                                            if (!IsFileUsedbyAnotherProcess(fullPath) &&
+                                                new FileInfo(fullPath).Length != 0)
                                             {
-                                                var res = JsonConvert.DeserializeObject<s3_object>(result);
-                                                if (res.S3Object.Length > 0)
+                                                // get the file last modified from database
+                                                string relativePath =
+                                                    fullPath.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
+                                                string url = Utilities.DevelopmentMode
+                                                                 ? "http://localhost:3000"
+                                                                 : "http://versavault.com";
+                                                url += "/api/get_object_status?bucket_key=" +
+                                                       Utilities.MyConfig.BucketKey + "&key=" + relativePath +
+                                                       "&machine_key=" + Utilities.MyConfig.MachineKey;
+                                                string result = GetResponse(url);
+                                                if (!string.IsNullOrEmpty(result))
                                                 {
-                                                    foreach (var s3ObjSub in res.S3Object)
+                                                    var res = JsonConvert.DeserializeObject<s3_object>(result);
+                                                    if (res.S3Object.Length > 0)
                                                     {
-                                                        if (s3ObjSub != null)
+                                                        foreach (var s3ObjSub in res.S3Object)
                                                         {
-                                                            string fullPathSub = Path.Combine(Utilities.Path, s3ObjSub.Key.Replace("/", "\\"));
-                                                            if (!s3ObjSub.Folder)
+                                                            if (s3ObjSub != null)
                                                             {
-                                                                try
+                                                                string fullPathSub = Path.Combine(Utilities.Path,
+                                                                                                  s3ObjSub.Key.Replace(
+                                                                                                      "/", "\\"));
+                                                                if (!s3ObjSub.Folder)
                                                                 {
-                                                                    TimeSpan timeSpan = new DirectoryInfo(fullPathSub).LastWriteTime.Subtract(s3ObjSub.LastModified);
-                                                                    if (Math.Floor(timeSpan.TotalSeconds) != 0)
+                                                                    try
                                                                     {
-                                                                        ShowBalloon("Uploading file content......");
-                                                                        Addobject(fullPath);
+                                                                        TimeSpan timeSpan =
+                                                                            new DirectoryInfo(fullPathSub).LastWriteTime
+                                                                                .Subtract(s3ObjSub.LastModified);
+                                                                        if (Math.Floor(timeSpan.TotalSeconds) != 0)
+                                                                        {
+                                                                            ShowBalloon("Uploading file content......");
+                                                                            Addobject(fullPath);
+                                                                        }
                                                                     }
-                                                                }
-                                                                catch (Exception)
-                                                                {
-                                                                    // Todo
-                                                                    // need to fix this when an error occured
+                                                                    catch (Exception)
+                                                                    {
+                                                                        // Todo
+                                                                        // need to fix this when an error occured
+                                                                    }
                                                                 }
                                                             }
                                                         }
                                                     }
-                                                }
-                                                else
-                                                {
-                                                    ShowBalloon("Uploading file content......");
-                                                    Addobject(fullPath);
+                                                    else
+                                                    {
+                                                        ShowBalloon("Uploading file content......");
+                                                        Addobject(fullPath);
+                                                    }
                                                 }
                                             }
-                                        }
-                                        else
-                                        {
-                                            // Need to maintain queue
-                                            if (!_fileQueue.ContainsKey(fullPath))
-                                                _fileQueue.Add(fullPath, new FileQueue { Type = type, Name = name });
                                             else
-                                                _fileQueue[fullPath] = new FileQueue { Type = type, Name = name };
-                                            return;
+                                            {
+                                                // Need to maintain queue
+                                                if (!_fileQueue.ContainsKey(fullPath))
+                                                    _fileQueue.Add(fullPath, new FileQueue { Type = type, Name = name });
+                                                else
+                                                    _fileQueue[fullPath] = new FileQueue { Type = type, Name = name };
+                                                return;
+                                            }
                                         }
                                     }
                                     else
@@ -1484,8 +1522,7 @@ namespace VersaVaultSyncTool
         }
 
         //const and dll functions for moving form
-        public const int WmNclbuttondown = 0xA1;
-        public const int HtCaption = 0x2;
+        public const int WmNclbuttondown = 0xA1; public const int HtCaption = 0x2;
 
         [DllImport("user32.dll")]
         public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
@@ -1521,8 +1558,7 @@ namespace VersaVaultSyncTool
 
         private void checkForUpdatesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var notification = new Notification();
-            notification.Show();
+            Program.CheckVersion();
         }
     }
 
