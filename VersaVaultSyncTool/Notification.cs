@@ -13,42 +13,84 @@ namespace VersaVaultSyncTool
 
         private void NotificationLoad(object sender, EventArgs e)
         {
-            int screenWidth = Screen.PrimaryScreen.WorkingArea.Width;
-            int screenHeight = Screen.PrimaryScreen.WorkingArea.Height;
-            Left = screenWidth - Width - 5;
-            Top = screenHeight - Height;
-            HideForm();
+            try
+            {
+                int screenWidth = Screen.PrimaryScreen.WorkingArea.Width;
+                int screenHeight = Screen.PrimaryScreen.WorkingArea.Height;
+                Left = screenWidth - Width - 5;
+                Top = screenHeight - Height;
+                //ShowForm(10);
+            }
+            catch (Exception)
+            {
+                return;
+            }
         }
 
-        private void HideForm()
+        public void SetMessage(string message)
+        {
+            LblStatus.Text = message;
+        }
+
+        public void ShowForm(int speed)
         {
             Application.DoEvents();
-            Thread.Sleep(1500);
-            FadeOut();
+            FadeIn(speed);
+            Application.DoEvents();
         }
 
-        private void FadeOut()
+        public void HideForm(int speed)
         {
-            int loopctr;
-            for (loopctr = 100; loopctr >= 5; loopctr -= 10)
-            {
-                Opacity = loopctr / 95.0;
-                Refresh();
-                Thread.Sleep(100);
-            }
-            Close();
-            Dispose();
+            Application.DoEvents();
+            Thread.Sleep(500);
+            FadeOut(speed);
+            Application.DoEvents();
+            Opacity = 0;
         }
 
-        private void FadeIn()
+        private void FadeOut(int speed)
         {
-            int loopctr;
-            for (loopctr = 10; loopctr <= 105; loopctr += 10)
+            try
             {
-                Opacity = loopctr / 95.0;
-                Refresh();
-                Thread.Sleep(100);
+                int loopctr;
+                for (loopctr = 100; loopctr >= 5; loopctr -= speed)
+                {
+                    if (Opacity > loopctr / 95.0)
+                        Opacity = loopctr / 95.0;
+                    Refresh();
+                    Thread.Sleep(100);
+                    Application.DoEvents();
+                }
             }
+            catch (Exception)
+            {
+                return;
+            }
+        }
+
+        private void FadeIn(int speed)
+        {
+            try
+            {
+                int loopctr;
+                for (loopctr = 10; loopctr <= 105; loopctr += speed)
+                {
+                    if (Opacity < loopctr / 95.0)
+                        Opacity = loopctr / 95.0;
+                    Refresh();
+                    Thread.Sleep(100);
+                    Application.DoEvents();
+                }
+            }
+            catch (Exception)
+            {
+                return;
+            }
+        }
+
+        private void Notification_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            //e.Cancel = true;
         }
     }
 }

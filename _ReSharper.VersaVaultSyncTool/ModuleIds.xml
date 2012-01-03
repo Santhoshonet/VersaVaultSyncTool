@@ -4,5 +4,5 @@
   <Module PersistentId="8F23007D-7B57-4A2C-89AF-CB313AE1E4DF" ModuleId="Uninstaller" />
   <Module PersistentId="C0D6AEF9-B335-426D-AEEC-33855A4F5F21" ModuleId="VersaVaultUpdater" />
   <Module PersistentId="7BF5031B-58F0-4B5F-8696-2B2C6091506E" ModuleId="VersaVaultLibrary" />
-  <Module PersistentId="System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" ModuleId="System.Windows.Forms" />
+  <Module PersistentId="4683FF35-0E67-44BE-95C0-40ABAE3D0EB4" ModuleId="Multi_Upload_Test_App" />
 </Modules>

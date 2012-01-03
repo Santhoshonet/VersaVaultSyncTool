@@ -1,0 +1,7 @@
+C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\Multi_Upload_Test_App\bin\Debug\Multi_Upload_Test_App.exe
+C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\Multi_Upload_Test_App\bin\Debug\Multi_Upload_Test_App.pdb
+C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\Multi_Upload_Test_App\bin\Debug\VersaVaultLibrary.dll
+C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\Multi_Upload_Test_App\bin\Debug\VersaVaultLibrary.pdb
+C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\Multi_Upload_Test_App\obj\Debug\ResolveAssemblyReference.cache
+C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\Multi_Upload_Test_App\obj\Debug\Multi_Upload_Test_App.exe
+C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\Multi_Upload_Test_App\obj\Debug\Multi_Upload_Test_App.pdb

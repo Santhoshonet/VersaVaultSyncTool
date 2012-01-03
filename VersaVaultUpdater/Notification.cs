@@ -32,58 +32,38 @@ namespace VersaVaultUpdater
                         Thread.Sleep(1000);
                         Application.DoEvents();
                     }
-                    using (System.Security.Principal.WindowsImpersonationContext impersonationContext = System.Security.Principal.WindowsIdentity.Impersonate(IntPtr.Zero))
+                    if (File.Exists(Path.Combine(Application.StartupPath, "VersaVaultSyncTool_old.exe")))
+                        File.Delete(Path.Combine(Application.StartupPath, "VersaVaultSyncTool_old.exe"));
+                    File.Move(Path.Combine(Application.StartupPath, "VersaVaultSyncTool.exe"),
+                              Path.Combine(Application.StartupPath, "VersaVaultSyncTool_old.exe"));
+                    var amazons3 = AWSClientFactory.CreateAmazonS3Client(Utilities.AwsAccessKey, Utilities.AwsSecretKey, new AmazonS3Config { CommunicationProtocol = Amazon.S3.Model.Protocol.HTTP });
+                    var listVersionRequest = new Amazon.S3.Model.ListVersionsRequest { BucketName = "VersaVault", Prefix = "VersaVaultSyncTool.exe" };
+                    foreach (var s3ObjectVersion in amazons3.ListVersions(listVersionRequest).Versions)
                     {
-                        if (File.Exists(Path.Combine(Application.StartupPath, "VersaVaultSyncTool_old.exe")))
-                            File.Delete(Path.Combine(Application.StartupPath, "VersaVaultSyncTool_old.exe"));
-                        File.Move(Path.Combine(Application.StartupPath, "VersaVaultSyncTool.exe"),
-                                  Path.Combine(Application.StartupPath, "VersaVaultSyncTool_old.exe"));
-                        var amazons3 = AWSClientFactory.CreateAmazonS3Client(Utilities.AwsAccessKey,
-                                                                             Utilities.AwsSecretKey,
-                                                                             new AmazonS3Config
-                                                                                 {
-                                                                                     CommunicationProtocol =
-                                                                                         Amazon.S3.Model.Protocol.HTTP
-                                                                                 });
-                        var listVersionRequest = new Amazon.S3.Model.ListVersionsRequest { BucketName = "VersaVault", Prefix = "VersaVaultSyncTool.exe" };
-                        foreach (var s3ObjectVersion in amazons3.ListVersions(listVersionRequest).Versions)
+                        if (s3ObjectVersion.IsLatest)
                         {
-                            if (s3ObjectVersion.IsLatest)
+                            if (s3ObjectVersion.VersionId != null && s3ObjectVersion.VersionId != "null")
                             {
-                                if (s3ObjectVersion.VersionId != null && s3ObjectVersion.VersionId != "null")
+                                if (Utilities.MyConfig.VersionId != s3ObjectVersion.VersionId)
                                 {
-                                    if (Utilities.MyConfig.VersionId != s3ObjectVersion.VersionId)
-                                    {
-                                        var service = new S3Service
-                                                          {
-                                                              AccessKeyID = Utilities.AwsAccessKey,
-                                                              SecretAccessKey = Utilities.AwsSecretKey
-                                                          };
-                                        LblStatus.Text = "Checking for updates";
-                                        ShowForm();
-                                        service.GetObjectProgress += ServiceGetObjectProgress;
-                                        service.GetObject("VersaVault", s3ObjectVersion.Key,
-                                                          Path.Combine(Application.StartupPath, "VersaVaultSyncTool.exe"));
-                                        LblStatus.Text = "Updating VersaVault";
-                                        HideForm();
-                                        Process.Start(Path.Combine(Application.StartupPath, "VersaVaultSyncTool.exe"),
-                                                      "set_version" + " " + s3ObjectVersion.VersionId);
-                                        Application.Exit();
-                                    }
+                                    var service = new S3Service { AccessKeyID = Utilities.AwsAccessKey, SecretAccessKey = Utilities.AwsSecretKey };
+                                    LblStatus.Text = "Started downloading update.";
+                                    ShowForm();
+                                    service.GetObjectProgress += ServiceGetObjectProgress;
+                                    service.GetObject("VersaVault", s3ObjectVersion.Key, Path.Combine(Application.StartupPath, "VersaVaultSyncTool.exe"));
+                                    LblStatus.Text = "Updating VersaVault";
+                                    HideForm();
+                                    Process.Start(Path.Combine(Application.StartupPath, "VersaVaultSyncTool.exe"), "set_version" + " " + s3ObjectVersion.VersionId);
+                                    Application.Exit();
                                 }
-                                else
-                                {
-                                    // enable bucker versioning
-                                    var setBucketVersioning = new Amazon.S3.Model.SetBucketVersioningRequest
-                                                                  {
-                                                                      BucketName = "VersaVault",
-                                                                      VersioningConfig =
-                                                                          new Amazon.S3.Model.S3BucketVersioningConfig { Status = "Enabled" }
-                                                                  };
-                                    amazons3.SetBucketVersioning(setBucketVersioning);
-                                }
-                                break;
                             }
+                            else
+                            {
+                                // enable bucker versioning
+                                var setBucketVersioning = new Amazon.S3.Model.SetBucketVersioningRequest { BucketName = "VersaVault", VersioningConfig = new Amazon.S3.Model.S3BucketVersioningConfig { Status = "Enabled" } };
+                                amazons3.SetBucketVersioning(setBucketVersioning);
+                            }
+                            break;
                         }
                     }
                 }
@@ -93,9 +73,6 @@ namespace VersaVaultUpdater
                 MessageBox.Show(ex.Message);
                 LblStatus.Text = "Unable to update VersaVault due to " + ex.Message;
                 StartVersaVault();
-            }
-            finally
-            {
             }
         }
 

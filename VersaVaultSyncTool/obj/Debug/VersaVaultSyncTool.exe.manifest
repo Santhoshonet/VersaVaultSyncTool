@@ -96,19 +96,19 @@
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" />
-        <dsig:DigestValue>oEu4DNj3zq4Ar4XVG8ZVOpQVP3k=</dsig:DigestValue>
+        <dsig:DigestValue>oMOQ3KuHPJgliZVi5NENznk+7X8=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="VersaVaultSyncTool.exe" size="513024">
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="VersaVaultSyncTool.exe" size="657408">
       <assemblyIdentity name="VersaVaultSyncTool" version="1.0.0.0" language="neutral" processorArchitecture="msil" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" />
-        <dsig:DigestValue>8gl82IkvHq6SW5H5wmHKkcj30lo=</dsig:DigestValue>
+        <dsig:DigestValue>3AnMgeDwX+vC0qPGElY8UVDM4pk=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>

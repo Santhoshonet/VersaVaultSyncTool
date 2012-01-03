@@ -58,7 +58,7 @@ namespace VersaVaultSyncTool
                 {
                     Application.EnableVisualStyles();
                     Application.SetCompatibleTextRenderingDefault(false);
-                    if (CheckVersion())
+                    if (CheckVersion(false))
                         Application.Run(new VersaVault());
                 }
                 else
@@ -91,55 +91,70 @@ namespace VersaVaultSyncTool
             Application.Exit();
         }
 
-        public static bool CheckVersion()
+        public static bool CheckVersion(bool forceCheck)
         {
             // first check the last updated date
-            var needtoUpdate = false;
-            if (Utilities.MyConfig.LastUpdateDate == DateTime.MinValue)
-                needtoUpdate = true;
-            else
+            var notification = new Notification();
+            notification.SetMessage("Checking for updates");
+            try
             {
-                TimeSpan timeSpan = DateTime.Now.Subtract(Utilities.MyConfig.LastUpdateDate);
-                if (timeSpan.Days >= 10)
+                if (forceCheck)
+                    notification.Show();
+                var needtoUpdate = false;
+                if (Utilities.MyConfig.LastUpdateDate == DateTime.MinValue)
                     needtoUpdate = true;
-            }
-            if (needtoUpdate)
-            {
-                var amazons3 = AWSClientFactory.CreateAmazonS3Client(Utilities.AwsAccessKey, Utilities.AwsSecretKey,
-                                                                     new AmazonS3Config { CommunicationProtocol = Protocol.HTTP });
-                var listVersionRequest = new ListVersionsRequest { BucketName = "VersaVault", Prefix = "VersaVaultSyncTool.exe" };
-                foreach (var s3ObjectVersion in amazons3.ListVersions(listVersionRequest).Versions)
+                else
                 {
-                    if (s3ObjectVersion.IsLatest)
-                    {
-                        if (s3ObjectVersion.VersionId != null && s3ObjectVersion.VersionId != "null")
-                        {
-                            if (!string.IsNullOrEmpty(Utilities.MyConfig.VersionId) && Utilities.MyConfig.VersionId != s3ObjectVersion.VersionId)
-                            {
-                                var startInfo =
-                                    new ProcessStartInfo(
-                                        Path.Combine(Application.StartupPath, "VersaVaultUpdater.exe"),
-                                        s3ObjectVersion.VersionId + " " + "update") { Verb = "runas" };
-                                Process.Start(startInfo);
-                                Application.Exit();
-                                return false;
-                            }
-                            Utilities.MyConfig.VersionId = s3ObjectVersion.VersionId;
-                            Utilities.MyConfig.Save();
-                            return true;
-                        }
-                        // enable bucker versioning
-                        var setBucketVersioning = new SetBucketVersioningRequest
-                                                      {
-                                                          BucketName = "VersaVault",
-                                                          VersioningConfig =
-                                                              new S3BucketVersioningConfig { Status = "Enabled" }
-                                                      };
-                        amazons3.SetBucketVersioning(setBucketVersioning);
-                        break;
-                    }
+                    TimeSpan timeSpan = DateTime.Now.Subtract(Utilities.MyConfig.LastUpdateDate);
+                    if (timeSpan.Days >= 10)
+                        needtoUpdate = true;
                 }
-                return true;
+                if (needtoUpdate || forceCheck)
+                {
+                    var amazons3 = AWSClientFactory.CreateAmazonS3Client(Utilities.AwsAccessKey, Utilities.AwsSecretKey, new AmazonS3Config { CommunicationProtocol = Protocol.HTTP });
+                    var listVersionRequest = new ListVersionsRequest { BucketName = "VersaVault", Prefix = "VersaVaultSyncTool.exe" };
+                    foreach (var s3ObjectVersion in amazons3.ListVersions(listVersionRequest).Versions)
+                    {
+                        if (s3ObjectVersion.IsLatest)
+                        {
+                            if (s3ObjectVersion.VersionId != null && s3ObjectVersion.VersionId != "null")
+                            {
+                                if (!string.IsNullOrEmpty(Utilities.MyConfig.VersionId) && Utilities.MyConfig.VersionId != s3ObjectVersion.VersionId)
+                                {
+                                    notification.Dispose();
+                                    var startInfo = new ProcessStartInfo(Path.Combine(Application.StartupPath, "VersaVaultUpdater.exe"), s3ObjectVersion.VersionId + " " + "update") { Verb = "runas" };
+                                    Process.Start(startInfo);
+                                    Application.Exit();
+                                    return false;
+                                }
+                                Utilities.MyConfig.VersionId = s3ObjectVersion.VersionId;
+                                Utilities.MyConfig.Save();
+                                return true;
+                            }
+                            // enable bucker versioning
+                            var setBucketVersioning = new SetBucketVersioningRequest { BucketName = "VersaVault", VersioningConfig = new S3BucketVersioningConfig { Status = "Enabled" } };
+                            amazons3.SetBucketVersioning(setBucketVersioning);
+                            break;
+                        }
+                    }
+                    return true;
+                }
+            }
+            catch (Exception)
+            {
+            }
+            finally
+            {
+                try
+                {
+                    notification.Controls["LblStatus"].Text = "VersaVault is upto date.";
+                    notification.HideForm(10);
+                    notification.Close();
+                    notification.Dispose();
+                }
+                catch (Exception)
+                {
+                }
             }
             return true;
         }

@@ -1,4 +1,6 @@
-﻿namespace VersaVaultSyncTool
+﻿using System.Collections.Generic;
+
+namespace VersaVaultSyncTool
 {
     partial class VersaVault
     {
@@ -36,6 +38,8 @@
             this.startToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.settingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.startSyncToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.ResyncToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.hideNotificationsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.checkForUpdatesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripSeparator();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -58,9 +62,9 @@
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
-            // 
+            //
             // LblError
-            // 
+            //
             this.LblError.Font = new System.Drawing.Font("Segoe UI Semibold", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.LblError.ForeColor = System.Drawing.Color.Tomato;
             this.LblError.Location = new System.Drawing.Point(5, 240);
@@ -68,31 +72,32 @@
             this.LblError.Size = new System.Drawing.Size(208, 45);
             this.LblError.TabIndex = 5;
             this.LblError.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
+            //
             // VersaVaultNotifications
-            // 
+            //
             this.VersaVaultNotifications.ContextMenuStrip = this.contextMenuStrip;
             this.VersaVaultNotifications.Icon = ((System.Drawing.Icon)(resources.GetObject("VersaVaultNotifications.Icon")));
             this.VersaVaultNotifications.Text = "VersaVault";
             this.VersaVaultNotifications.Visible = true;
             this.VersaVaultNotifications.DoubleClick += new System.EventHandler(this.VersaVaultNotificationsDoubleClick);
-            // 
+            //
             // contextMenuStrip
-            // 
+            //
             this.contextMenuStrip.BackColor = System.Drawing.Color.WhiteSmoke;
             this.contextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.startToolStripMenuItem,
             this.settingsToolStripMenuItem,
             this.startSyncToolStripMenuItem,
+            this.ResyncToolStripMenuItem,
+            this.hideNotificationsToolStripMenuItem,
             this.checkForUpdatesToolStripMenuItem,
             this.toolStripMenuItem1,
             this.exitToolStripMenuItem});
             this.contextMenuStrip.Name = "contextMenuStrip";
-            this.contextMenuStrip.RenderMode = System.Windows.Forms.ToolStripRenderMode.System;
-            this.contextMenuStrip.Size = new System.Drawing.Size(262, 142);
-            // 
+            this.contextMenuStrip.Size = new System.Drawing.Size(262, 186);
+            //
             // startToolStripMenuItem
-            // 
+            //
             this.startToolStripMenuItem.AutoToolTip = true;
             this.startToolStripMenuItem.Checked = true;
             this.startToolStripMenuItem.CheckOnClick = true;
@@ -102,54 +107,75 @@
             this.startToolStripMenuItem.Text = "Start AmazonSyn on system startup";
             this.startToolStripMenuItem.TextDirection = System.Windows.Forms.ToolStripTextDirection.Horizontal;
             this.startToolStripMenuItem.ToolTipText = "Start sync automatically when system started up.";
+            this.startToolStripMenuItem.Visible = false;
             this.startToolStripMenuItem.Click += new System.EventHandler(this.StartToolStripMenuItemClick);
-            // 
+            //
             // settingsToolStripMenuItem
-            // 
+            //
             this.settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
             this.settingsToolStripMenuItem.Size = new System.Drawing.Size(261, 22);
             this.settingsToolStripMenuItem.Text = "Se&ttings";
             this.settingsToolStripMenuItem.Click += new System.EventHandler(this.SettingsToolStripMenuItemClick);
-            // 
+            //
             // startSyncToolStripMenuItem
-            // 
+            //
             this.startSyncToolStripMenuItem.Name = "startSyncToolStripMenuItem";
             this.startSyncToolStripMenuItem.Size = new System.Drawing.Size(261, 22);
             this.startSyncToolStripMenuItem.Text = "Start Sync";
+            this.startSyncToolStripMenuItem.Visible = false;
             this.startSyncToolStripMenuItem.Click += new System.EventHandler(this.StartSyncToolStripMenuItemClick);
-            // 
+            //
+            // ResyncToolStripMenuItem
+            //
+            this.ResyncToolStripMenuItem.Name = "ResyncToolStripMenuItem";
+            this.ResyncToolStripMenuItem.Size = new System.Drawing.Size(261, 22);
+            this.ResyncToolStripMenuItem.Text = "Resync VersaVault";
+            this.ResyncToolStripMenuItem.Visible = false;
+            this.ResyncToolStripMenuItem.Click += new System.EventHandler(this.ResyncToolStripMenuItem_Click);
+            //
+            // hideNotificationsToolStripMenuItem
+            //
+            this.hideNotificationsToolStripMenuItem.Checked = true;
+            this.hideNotificationsToolStripMenuItem.CheckOnClick = true;
+            this.hideNotificationsToolStripMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.hideNotificationsToolStripMenuItem.Name = "hideNotificationsToolStripMenuItem";
+            this.hideNotificationsToolStripMenuItem.Size = new System.Drawing.Size(261, 22);
+            this.hideNotificationsToolStripMenuItem.Text = "Show Notifications";
+            this.hideNotificationsToolStripMenuItem.Visible = false;
+            this.hideNotificationsToolStripMenuItem.Click += new System.EventHandler(this.hideNotificationsToolStripMenuItem_Click);
+            //
             // checkForUpdatesToolStripMenuItem
-            // 
+            //
             this.checkForUpdatesToolStripMenuItem.Name = "checkForUpdatesToolStripMenuItem";
             this.checkForUpdatesToolStripMenuItem.Size = new System.Drawing.Size(261, 22);
             this.checkForUpdatesToolStripMenuItem.Text = "Check for updates";
             this.checkForUpdatesToolStripMenuItem.Click += new System.EventHandler(this.checkForUpdatesToolStripMenuItem_Click);
-            // 
+            //
             // toolStripMenuItem1
-            // 
+            //
             this.toolStripMenuItem1.Name = "toolStripMenuItem1";
             this.toolStripMenuItem1.Size = new System.Drawing.Size(258, 6);
-            // 
+            //
             // exitToolStripMenuItem
-            // 
+            //
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
             this.exitToolStripMenuItem.Size = new System.Drawing.Size(261, 22);
             this.exitToolStripMenuItem.Text = "E&xit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.ExitToolStripMenuItemClick);
-            // 
+            //
             // _watchFolder
-            // 
+            //
             this._watchFolder.EnableRaisingEvents = true;
             this._watchFolder.SynchronizingObject = this;
-            // 
+            //
             // timer_status_update
-            // 
+            //
             this.timer_status_update.Enabled = true;
             this.timer_status_update.Interval = 500;
             this.timer_status_update.Tick += new System.EventHandler(this.TimerStatusUpdateTick);
-            // 
+            //
             // connectBtn
-            // 
+            //
             this.connectBtn.Cursor = System.Windows.Forms.Cursors.Hand;
             this.connectBtn.Image = global::VersaVaultSyncTool.Properties.Resources.connectButton_Normal;
             this.connectBtn.Location = new System.Drawing.Point(213, 240);
@@ -162,9 +188,9 @@
             this.connectBtn.MouseDown += new System.Windows.Forms.MouseEventHandler(this.ConnectBtnMouseDown);
             this.connectBtn.MouseUp += new System.Windows.Forms.MouseEventHandler(this.ConnectBtnMouseUp);
             this.connectBtn.MouseEnter += new System.EventHandler(this.ConnectBtnMouseEnter);
-            // 
+            //
             // TxtPassword
-            // 
+            //
             this.TxtPassword.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.TxtPassword.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.TxtPassword.Location = new System.Drawing.Point(7, 186);
@@ -173,9 +199,9 @@
             this.TxtPassword.Size = new System.Drawing.Size(381, 29);
             this.TxtPassword.TabIndex = 18;
             this.TxtPassword.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPasswordKeyPress);
-            // 
+            //
             // label1
-            // 
+            //
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.Color.Silver;
@@ -184,9 +210,9 @@
             this.label1.Size = new System.Drawing.Size(314, 21);
             this.label1.TabIndex = 17;
             this.label1.Text = "Enter the password you signed up with here";
-            // 
+            //
             // passwordLbl
-            // 
+            //
             this.passwordLbl.AutoSize = true;
             this.passwordLbl.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.passwordLbl.ForeColor = System.Drawing.Color.Gray;
@@ -195,18 +221,18 @@
             this.passwordLbl.Size = new System.Drawing.Size(82, 21);
             this.passwordLbl.TabIndex = 16;
             this.passwordLbl.Text = "Password";
-            // 
+            //
             // TxtUsername
-            // 
+            //
             this.TxtUsername.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.TxtUsername.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.TxtUsername.Location = new System.Drawing.Point(8, 92);
             this.TxtUsername.Name = "TxtUsername";
             this.TxtUsername.Size = new System.Drawing.Size(382, 29);
             this.TxtUsername.TabIndex = 15;
-            // 
+            //
             // fieldDescriptionLbl
-            // 
+            //
             this.fieldDescriptionLbl.AutoSize = true;
             this.fieldDescriptionLbl.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.fieldDescriptionLbl.ForeColor = System.Drawing.Color.Silver;
@@ -215,9 +241,9 @@
             this.fieldDescriptionLbl.Size = new System.Drawing.Size(343, 21);
             this.fieldDescriptionLbl.TabIndex = 14;
             this.fieldDescriptionLbl.Text = "Enter the email address you signed up with here";
-            // 
+            //
             // emailIdLbl
-            // 
+            //
             this.emailIdLbl.AutoSize = true;
             this.emailIdLbl.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.emailIdLbl.ForeColor = System.Drawing.Color.Gray;
@@ -226,9 +252,9 @@
             this.emailIdLbl.Size = new System.Drawing.Size(53, 21);
             this.emailIdLbl.TabIndex = 13;
             this.emailIdLbl.Text = "Email";
-            // 
+            //
             // closeWindow
-            // 
+            //
             this.closeWindow.Cursor = System.Windows.Forms.Cursors.Hand;
             this.closeWindow.Image = global::VersaVaultSyncTool.Properties.Resources.closeDefault;
             this.closeWindow.Location = new System.Drawing.Point(377, 12);
@@ -239,9 +265,9 @@
             this.closeWindow.MouseLeave += new System.EventHandler(this.CloseWindowMouseLeave);
             this.closeWindow.Click += new System.EventHandler(this.CloseWindowClick);
             this.closeWindow.MouseEnter += new System.EventHandler(this.CloseWindowMouseEnter);
-            // 
+            //
             // pictureBox2
-            // 
+            //
             this.pictureBox2.Cursor = System.Windows.Forms.Cursors.SizeAll;
             this.pictureBox2.Image = global::VersaVaultSyncTool.Properties.Resources.topStrip;
             this.pictureBox2.Location = new System.Drawing.Point(13, 0);
@@ -250,9 +276,9 @@
             this.pictureBox2.TabIndex = 11;
             this.pictureBox2.TabStop = false;
             this.pictureBox2.MouseDown += new System.Windows.Forms.MouseEventHandler(this.PictureBox1MouseDown);
-            // 
+            //
             // pictureBox1
-            // 
+            //
             this.pictureBox1.Cursor = System.Windows.Forms.Cursors.SizeAll;
             this.pictureBox1.Image = global::VersaVaultSyncTool.Properties.Resources.windowsAppLogo;
             this.pictureBox1.Location = new System.Drawing.Point(0, 0);
@@ -261,9 +287,9 @@
             this.pictureBox1.TabIndex = 10;
             this.pictureBox1.TabStop = false;
             this.pictureBox1.MouseDown += new System.Windows.Forms.MouseEventHandler(this.PictureBox1MouseDown);
-            // 
+            //
             // VersaVault
-            // 
+            //
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
@@ -299,19 +325,12 @@
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
-
         }
 
         #endregion Windows Form Designer generated code
 
         private System.Windows.Forms.NotifyIcon VersaVaultNotifications;
         private System.IO.FileSystemWatcher _watchFolder;
-        private System.Windows.Forms.ContextMenuStrip contextMenuStrip;
-        private System.Windows.Forms.ToolStripMenuItem startToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem settingsToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem startSyncToolStripMenuItem;
-        private System.Windows.Forms.ToolStripSeparator toolStripMenuItem1;
-        private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
         private System.Windows.Forms.Label LblError;
         private System.Windows.Forms.Timer timer_status_update;
         private System.Windows.Forms.PictureBox connectBtn;
@@ -324,6 +343,16 @@
         private System.Windows.Forms.PictureBox closeWindow;
         private System.Windows.Forms.PictureBox pictureBox2;
         private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.ContextMenuStrip contextMenuStrip;
+        private System.Windows.Forms.ToolStripMenuItem startToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem settingsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem startSyncToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem checkForUpdatesToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem ResyncToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem hideNotificationsToolStripMenuItem;
+        private readonly Notification notification;
+        private readonly List<string> _processingFiles = new List<string>();
     }
 }
