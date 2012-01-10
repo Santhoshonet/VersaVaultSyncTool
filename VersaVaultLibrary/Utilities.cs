@@ -8,9 +8,10 @@ namespace VersaVaultLibrary
     {
         public static string AwsAccessKey = "AKIAIW36YM46YELZCT3A";
         public static string AwsSecretKey = "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";
-        public static bool DevelopmentMode = true;
+        public static bool DevelopmentMode = false;
         public static string Path = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "VersaVault");
         public static string AppPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VersaVault");
+        public static string ConfigPath = System.IO.Path.Combine(AppPath, "VersaVault.config");
         public static Myconfiguration MyConfig = new Myconfiguration();
 
         public static void Startup(bool add, string applicationExecutablePath)

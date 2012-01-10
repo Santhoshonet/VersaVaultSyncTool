@@ -53,8 +53,11 @@ namespace VersaVaultUpdater
                                     service.GetObject("VersaVault", s3ObjectVersion.Key, Path.Combine(Application.StartupPath, "VersaVaultSyncTool.exe"));
                                     LblStatus.Text = "Updating VersaVault";
                                     HideForm();
-                                    Process.Start(Path.Combine(Application.StartupPath, "VersaVaultSyncTool.exe"), "set_version" + " " + s3ObjectVersion.VersionId);
-                                    Application.Exit();
+                                    if (File.Exists(Path.Combine(Application.StartupPath, "VersaVaultSyncTool.exe")))
+                                    {
+                                        Process.Start(Path.Combine(Application.StartupPath, "VersaVaultSyncTool.exe"), "set_version" + " " + s3ObjectVersion.VersionId);
+                                        Application.Exit();
+                                    }
                                 }
                             }
                             else

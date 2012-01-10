@@ -58,7 +58,9 @@ namespace VersaVaultSyncTool
                 {
                     Application.EnableVisualStyles();
                     Application.SetCompatibleTextRenderingDefault(false);
-                    if (CheckVersion(false))
+                    if (!Utilities.DevelopmentMode && CheckVersion(false))
+                        Application.Run(new VersaVault());
+                    else
                         Application.Run(new VersaVault());
                 }
                 else
@@ -99,14 +101,17 @@ namespace VersaVaultSyncTool
             try
             {
                 if (forceCheck)
+                {
                     notification.Show();
+                    notification.ShowForm(10);
+                }
                 var needtoUpdate = false;
                 if (Utilities.MyConfig.LastUpdateDate == DateTime.MinValue)
                     needtoUpdate = true;
                 else
                 {
                     TimeSpan timeSpan = DateTime.Now.Subtract(Utilities.MyConfig.LastUpdateDate);
-                    if (timeSpan.Days >= 10)
+                    if (timeSpan.TotalDays >= 0)
                         needtoUpdate = true;
                 }
                 if (needtoUpdate || forceCheck)
@@ -147,7 +152,7 @@ namespace VersaVaultSyncTool
             {
                 try
                 {
-                    notification.Controls["LblStatus"].Text = "VersaVault is upto date.";
+                    notification.Controls["LblStatus"].Text = @"VersaVault is upto date.";
                     notification.HideForm(10);
                     notification.Close();
                     notification.Dispose();

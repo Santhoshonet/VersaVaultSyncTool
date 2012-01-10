@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Security.Cryptography;
 using Amazon.S3;
 using Amazon.S3.Model;
+using Newtonsoft.Json;
 using VersaVaultLibrary;
 
 namespace Multi_Upload_Test_App
@@ -13,24 +15,36 @@ namespace Multi_Upload_Test_App
         static string _secretAccessKey = "";
         // Your AWS Credentials.
         const string ExistingBucketName = "VersaVault";
-        const string FilePath = @"C:\Users\Santhosh\Documents\VersaVault\Test.txt";
+        const string FilePath = @"C:\Users\Santhosh\Documents\VersaVault\1559531169 - Copy.pdf";
         private static readonly string KeyName = Path.GetFileName(FilePath);
 
         static void Main()
         {
             _accessKeyId = Utilities.AwsAccessKey;
             _secretAccessKey = Utilities.AwsSecretKey;
-
             AmazonS3 s3Client = new AmazonS3Client(_accessKeyId, _secretAccessKey);
-
             ListMultipartUploadsRequest allMultipartUploadsRequest = new ListMultipartUploadsRequest().WithBucketName(ExistingBucketName);
             ListMultipartUploadsResponse mpUploadsResponse = s3Client.ListMultipartUploads(allMultipartUploadsRequest);
-
+            var objects = new List<Object>();
             foreach (MultipartUpload multipartUpload in mpUploadsResponse.MultipartUploads)
             {
+                bool isObjectdFound = false;
+                foreach (Object o in objects)
+                {
+                    if (o.UploadId == multipartUpload.UploadId)
+                    {
+                        o.Parts.Add(new Part { PartId = o.Parts.Count, Etag = "" });
+                        isObjectdFound = true;
+                    }
+                }
+                if (!isObjectdFound)
+                {
+                    objects.Add(new Object { Parts = new List<Part> { new Part() { Etag = "", PartId = 1 } }, UploadId = multipartUpload.UploadId });
+                }
             }
-
-            return;
+            var result = JsonConvert.SerializeObject(objects);
+            var objs = JsonConvert.DeserializeObject<List<Object>>(result);
+            //return;
 
             // List to store upload part responses.
             var uploadResponses = new List<UploadPartResponse>();
@@ -63,6 +77,7 @@ namespace Multi_Upload_Test_App
                         bytesToStream = new byte[contentLength - filePosition];
                         Array.Copy(bytes, filePosition, bytesToStream, 0, contentLength - filePosition);
                     }
+
                     Stream stream = new MemoryStream(bytesToStream);
                     // Create request to upload a part.
                     UploadPartRequest uploadRequest = new UploadPartRequest()
@@ -72,7 +87,8 @@ namespace Multi_Upload_Test_App
                         .WithPartNumber(i)
                         .WithPartSize(partSize)
                         .WithFilePosition(filePosition)
-                        .WithTimeout(1000000000);
+                        .WithTimeout(1000000000)
+                        .WithMD5Digest(Convert.ToBase64String(MD5.Create().ComputeHash(bytesToStream)));
                     uploadRequest.WithInputStream(stream);
                     // Upload part and add response to our list.
                     uploadResponses.Add(s3Client.UploadPart(uploadRequest));

@@ -5,3 +5,6 @@ C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSync
 C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\Multi_Upload_Test_App\obj\Debug\ResolveAssemblyReference.cache
 C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\Multi_Upload_Test_App\obj\Debug\Multi_Upload_Test_App.exe
 C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\Multi_Upload_Test_App\obj\Debug\Multi_Upload_Test_App.pdb
+C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\Multi_Upload_Test_App\bin\Debug\Newtonsoft.Json.dll
+C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\Multi_Upload_Test_App\bin\Debug\Newtonsoft.Json.pdb
+C:\Users\Santhosh\Desktop\MyWorks\Contract Right _ S3FilesManager\VersaVaultSyncTool\Multi_Upload_Test_App\bin\Debug\Newtonsoft.Json.xml

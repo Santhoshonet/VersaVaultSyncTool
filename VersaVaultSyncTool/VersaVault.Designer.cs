@@ -79,6 +79,7 @@ namespace VersaVaultSyncTool
             this.VersaVaultNotifications.Icon = ((System.Drawing.Icon)(resources.GetObject("VersaVaultNotifications.Icon")));
             this.VersaVaultNotifications.Text = "VersaVault";
             this.VersaVaultNotifications.Visible = true;
+            this.VersaVaultNotifications.Click += new System.EventHandler(this.VersaVaultNotificationsClick);
             this.VersaVaultNotifications.DoubleClick += new System.EventHandler(this.VersaVaultNotificationsDoubleClick);
             //
             // contextMenuStrip
@@ -94,7 +95,7 @@ namespace VersaVaultSyncTool
             this.toolStripMenuItem1,
             this.exitToolStripMenuItem});
             this.contextMenuStrip.Name = "contextMenuStrip";
-            this.contextMenuStrip.Size = new System.Drawing.Size(262, 186);
+            this.contextMenuStrip.Size = new System.Drawing.Size(262, 164);
             //
             // startToolStripMenuItem
             //
@@ -131,7 +132,7 @@ namespace VersaVaultSyncTool
             this.ResyncToolStripMenuItem.Size = new System.Drawing.Size(261, 22);
             this.ResyncToolStripMenuItem.Text = "Resync VersaVault";
             this.ResyncToolStripMenuItem.Visible = false;
-            this.ResyncToolStripMenuItem.Click += new System.EventHandler(this.ResyncToolStripMenuItem_Click);
+            this.ResyncToolStripMenuItem.Click += new System.EventHandler(this.ResyncToolStripMenuItemClick);
             //
             // hideNotificationsToolStripMenuItem
             //
@@ -142,14 +143,14 @@ namespace VersaVaultSyncTool
             this.hideNotificationsToolStripMenuItem.Size = new System.Drawing.Size(261, 22);
             this.hideNotificationsToolStripMenuItem.Text = "Show Notifications";
             this.hideNotificationsToolStripMenuItem.Visible = false;
-            this.hideNotificationsToolStripMenuItem.Click += new System.EventHandler(this.hideNotificationsToolStripMenuItem_Click);
+            this.hideNotificationsToolStripMenuItem.Click += new System.EventHandler(this.HideNotificationsToolStripMenuItemClick);
             //
             // checkForUpdatesToolStripMenuItem
             //
             this.checkForUpdatesToolStripMenuItem.Name = "checkForUpdatesToolStripMenuItem";
             this.checkForUpdatesToolStripMenuItem.Size = new System.Drawing.Size(261, 22);
             this.checkForUpdatesToolStripMenuItem.Text = "Check for updates";
-            this.checkForUpdatesToolStripMenuItem.Click += new System.EventHandler(this.checkForUpdatesToolStripMenuItem_Click);
+            this.checkForUpdatesToolStripMenuItem.Click += new System.EventHandler(CheckForUpdatesToolStripMenuItemClick);
             //
             // toolStripMenuItem1
             //

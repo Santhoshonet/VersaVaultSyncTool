@@ -95,6 +95,7 @@
     <Compile Include="Control.Designer.cs">
       <DependentUpon>Control.cs</DependentUpon>
     </Compile>
+    <Compile Include="LocalCache.cs" />
     <Compile Include="Notification.cs">
       <SubType>Form</SubType>
     </Compile>
