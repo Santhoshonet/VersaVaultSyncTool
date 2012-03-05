@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VersaVaultUpdater", "VersaV
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VersaVaultLibrary", "VersaVaultLibrary\VersaVaultLibrary.csproj", "{7BF5031B-58F0-4B5F-8696-2B2C6091506E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Multi_Upload_Test_App", "Multi_Upload_Test_App\Multi_Upload_Test_App.csproj", "{4683FF35-0E67-44BE-95C0-40ABAE3D0EB4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Testconsole", "Testconsole\Testconsole.csproj", "{DC5A39AC-26C2-42AC-9C82-4A55DF3761A5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,10 +33,10 @@ Global
 		{7BF5031B-58F0-4B5F-8696-2B2C6091506E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7BF5031B-58F0-4B5F-8696-2B2C6091506E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7BF5031B-58F0-4B5F-8696-2B2C6091506E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4683FF35-0E67-44BE-95C0-40ABAE3D0EB4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4683FF35-0E67-44BE-95C0-40ABAE3D0EB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4683FF35-0E67-44BE-95C0-40ABAE3D0EB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4683FF35-0E67-44BE-95C0-40ABAE3D0EB4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DC5A39AC-26C2-42AC-9C82-4A55DF3761A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DC5A39AC-26C2-42AC-9C82-4A55DF3761A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DC5A39AC-26C2-42AC-9C82-4A55DF3761A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DC5A39AC-26C2-42AC-9C82-4A55DF3761A5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

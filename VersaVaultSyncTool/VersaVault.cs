@@ -205,6 +205,9 @@ namespace VersaVaultSyncTool
                 if (!Directory.Exists(Utilities.AppPath))
                     Directory.CreateDirectory(Utilities.AppPath);
 
+                if (!Directory.Exists(Utilities.SharedFolderPath))
+                    Directory.CreateDirectory(Utilities.SharedFolderPath);
+
                 TxtUsername.Text = Utilities.MyConfig.Username;
                 TxtPassword.Text = Utilities.MyConfig.Password;
 
@@ -317,7 +320,7 @@ namespace VersaVaultSyncTool
             }
         }
 
-        private void VersaVaultFormClosed(object sender, FormClosedEventArgs e)
+        private static void VersaVaultFormClosed(object sender, FormClosedEventArgs e)
         {
         }
 
@@ -337,13 +340,13 @@ namespace VersaVaultSyncTool
                 ShowForm();
         }
 
-        private void VersaVaultNotificationsClick(object sender, EventArgs e)
+        private static void VersaVaultNotificationsClick(object sender, EventArgs e)
         {
             //Process.Start("explorer.exe", Utilities.Path);
-            ShowForm();
+            //ShowForm();
         }
 
-        private void VersaVaultNotificationsDoubleClick(object sender, EventArgs e)
+        private static void VersaVaultNotificationsDoubleClick(object sender, EventArgs e)
         {
             Process.Start("explorer.exe", Utilities.Path);
         }
@@ -359,28 +362,6 @@ namespace VersaVaultSyncTool
             catch (Exception)
             {
                 return;
-            }
-        }
-
-        private static bool IsFileUsedbyAnotherProcess(string filename)
-        {
-            // Its not a way elegant way, need to find out the better  code
-            try
-            {
-                if (File.Exists(filename))
-                {
-                    using (FileStream filestream = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.None))
-                    {
-                        filestream.Close();
-                        filestream.Dispose();
-                    }
-                    return false;
-                }
-                return false;
-            }
-            catch (IOException)
-            {
-                return true;
             }
         }
 
@@ -413,11 +394,14 @@ namespace VersaVaultSyncTool
             try
             {
                 string relativePath = path.Replace(Utilities.Path + "\\", "");
-                var addobjectrequest = new AddObjectRequest(_service, Utilities.MyConfig.BucketKey, relativePath + "/") { ContentLength = 0 };
-                addobjectrequest.GetResponse();
-                _syncStatus.Enqueue("Creating folder - " + relativePath);
-                //_applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new DirectoryInfo(path).LastWriteTime, Status = UpdateStatus.Update });
-                ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new DirectoryInfo(path).LastWriteTime, Status = UpdateStatus.Update });
+                if (relativePath.ToLower().IndexOf("shared") < 0)
+                {
+                    var addobjectrequest = new AddObjectRequest(_service, Utilities.MyConfig.BucketKey, relativePath + "/") { ContentLength = 0 };
+                    addobjectrequest.GetResponse();
+                    _syncStatus.Enqueue("Creating folder - " + relativePath);
+                    //_applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new DirectoryInfo(path).LastWriteTime, Status = UpdateStatus.Update });
+                    ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new DirectoryInfo(path).LastWriteTime, Status = UpdateStatus.Update }, false, string.Empty);
+                }
             }
             catch (Exception)
             {
@@ -434,7 +418,11 @@ namespace VersaVaultSyncTool
                 var removeobject = new DeleteObjectRequest(_service, Utilities.MyConfig.BucketKey, oldrelativePath + "/");
                 removeobject.GetResponse();
                 //_applicationUpates.Enqueue(new AppUpdateInfo { Key = oldrelativePath.Replace("\\", "/"), LastModifiedTime = DateTime.Now, Status = UpdateStatus.Delete });
-                ProcessApplicationUpdates(new AppUpdateInfo { Key = oldrelativePath.Replace("\\", "/"), LastModifiedTime = DateTime.Now, Status = UpdateStatus.Delete });
+                if (oldrelativePath.ToLower().IndexOf("shared") == 0)
+                {
+                }
+                else
+                    ProcessApplicationUpdates(new AppUpdateInfo { Key = oldrelativePath.Replace("\\", "/"), LastModifiedTime = DateTime.Now, Status = UpdateStatus.Delete }, false, string.Empty);
             }
             catch (Exception)
             {
@@ -446,28 +434,31 @@ namespace VersaVaultSyncTool
         {
             try
             {
-                if (!IsFileUsedbyAnotherProcess(newPath))
+                string newrelativePath = newPath.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
+                string oldrelativePath = oldPath.Replace(Utilities.Path + "\\", "").Replace("\\", "/");  // +"/" + Path.GetFileName(new_path);
+                if (newrelativePath.ToLower().IndexOf("shared") != 0 && oldrelativePath.ToLower().IndexOf("shared") != 0)
                 {
-                    string newrelativePath = newPath.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
-                    string oldrelativePath = oldPath.Replace(Utilities.Path + "\\", "").Replace("\\", "/");  // +"/" + Path.GetFileName(new_path);
-                    if (_service.ObjectExists(Utilities.MyConfig.BucketKey, oldrelativePath))
+                    if (!Utilities.IsFileUsedbyAnotherProcess(newPath))
                     {
-                        var request = new CopyObjectRequest(_service, Utilities.MyConfig.BucketKey, oldrelativePath, newrelativePath);
-                        var response = request.GetResponse();
-                        if (response.Error == null)
+                        if (_service.ObjectExists(Utilities.MyConfig.BucketKey, oldrelativePath))
                         {
-                            _service.DeleteObject(Utilities.MyConfig.BucketKey, oldrelativePath);
+                            var request = new CopyObjectRequest(_service, Utilities.MyConfig.BucketKey, oldrelativePath, newrelativePath);
+                            var response = request.GetResponse();
+                            if (response.Error == null)
+                            {
+                                _service.DeleteObject(Utilities.MyConfig.BucketKey, oldrelativePath);
+                            }
+                            SetAcltoObject(newrelativePath);
+                            ProcessApplicationUpdates(new AppUpdateInfo { Key = oldrelativePath.Replace("\\", "/"), LastModifiedTime = DateTime.Now, Status = UpdateStatus.Delete }, false, string.Empty);
+                            //_applicationUpates.Enqueue(new AppUpdateInfo { Key = oldrelativePath.Replace("\\", "/"), LastModifiedTime = DateTime.Now, Status = UpdateStatus.Delete });
+                            ProcessApplicationUpdates(new AppUpdateInfo { Key = newrelativePath.Replace("\\", "/"), LastModifiedTime = DateTime.Now, Status = UpdateStatus.Update }, false, string.Empty);
+                            //_applicationUpates.Enqueue(new AppUpdateInfo { Key = newrelativePath.Replace("\\", "/"), LastModifiedTime = DateTime.Now, Status = UpdateStatus.Update });
                         }
-                        SetAcltoObject(newrelativePath);
-                        ProcessApplicationUpdates(new AppUpdateInfo { Key = oldrelativePath.Replace("\\", "/"), LastModifiedTime = DateTime.Now, Status = UpdateStatus.Delete });
-                        //_applicationUpates.Enqueue(new AppUpdateInfo { Key = oldrelativePath.Replace("\\", "/"), LastModifiedTime = DateTime.Now, Status = UpdateStatus.Delete });
-                        ProcessApplicationUpdates(new AppUpdateInfo { Key = newrelativePath.Replace("\\", "/"), LastModifiedTime = DateTime.Now, Status = UpdateStatus.Update });
-                        //_applicationUpates.Enqueue(new AppUpdateInfo { Key = newrelativePath.Replace("\\", "/"), LastModifiedTime = DateTime.Now, Status = UpdateStatus.Update });
-                    }
-                    else
-                    {
-                        if (File.Exists(newPath))
-                            Addobject(newPath);
+                        else
+                        {
+                            if (File.Exists(newPath))
+                                Addobject(newPath);
+                        }
                     }
                 }
             }
@@ -485,7 +476,7 @@ namespace VersaVaultSyncTool
                 string relativePath = filePath.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
                 if (attribute != FileAttributes.Directory && attribute != (FileAttributes.Archive | FileAttributes.Hidden))
                 {
-                    if (File.Exists(filePath) && !IsFileUsedbyAnotherProcess(filePath))
+                    if (File.Exists(filePath) && !Utilities.IsFileUsedbyAnotherProcess(filePath))
                     {
                         var appUpdateInfo = new AppUpdateInfo
                                                 {
@@ -522,33 +513,51 @@ namespace VersaVaultSyncTool
                                 long filePosition = partSize * alreadyUploadedParts;
                                 for (int i = alreadyUploadedParts + 1; filePosition < contentLength; i++)
                                 {
-                                    byte[] bytesToStream;
-                                    if (filePosition + partSize < contentLength)
+                                    // Before upload the next set of upload part, need to check the last modified because user might modify it in the mean time
+                                    if (File.Exists(filePath) && appUpdateInfo.LastModifiedTime == new FileInfo(filePath).LastWriteTime)
                                     {
-                                        bytesToStream = new byte[partSize];
-                                        Array.Copy(bytes, filePosition, bytesToStream, 0, partSize);
+                                        byte[] bytesToStream;
+                                        if (filePosition + partSize < contentLength)
+                                        {
+                                            bytesToStream = new byte[partSize];
+                                            Array.Copy(bytes, filePosition, bytesToStream, 0, partSize);
+                                        }
+                                        else
+                                        {
+                                            bytesToStream = new byte[contentLength - filePosition];
+                                            Array.Copy(bytes, filePosition, bytesToStream, 0,
+                                                       contentLength - filePosition);
+                                        }
+                                        Stream stream = new MemoryStream(bytesToStream);
+                                        UploadPartRequest uploadRequest = new UploadPartRequest()
+                                            .WithBucketName(Utilities.MyConfig.BucketKey)
+                                            .WithKey(relativePath)
+                                            .WithUploadId(uploadId)
+                                            .WithPartNumber(i)
+                                            .WithPartSize(partSize)
+                                            .WithFilePosition(filePosition)
+                                            .WithTimeout(1000000000);
+                                        uploadRequest.WithInputStream(stream);
+                                        // Upload part and add response to our list.
+                                        var response = _amazons3.UploadPart(uploadRequest);
+                                        WriteResponseToFile(relativePath, Utilities.MyConfig.BucketKey, uploadId, appUpdateInfo.LastModifiedTime, response);
+                                        uploadResponses.Add(response);
+                                        filePosition += partSize;
+                                        ModifySyncStatus("Uploaded",
+                                                         contentLength <= filePosition ? contentLength : filePosition,
+                                                         contentLength, relativePath);
                                     }
                                     else
                                     {
-                                        bytesToStream = new byte[contentLength - filePosition];
-                                        Array.Copy(bytes, filePosition, bytesToStream, 0, contentLength - filePosition);
+                                        // need to abort the upload process
+                                        _processingFiles.Remove(filePath);
+                                        RemoveConfig(relativePath, lastUploadedPartdetail.BucketKey);
+                                        _amazons3.AbortMultipartUpload(new AbortMultipartUploadRequest()
+                                                                  .WithBucketName(Utilities.MyConfig.BucketKey)
+                                                                  .WithKey(relativePath)
+                                                                  .WithUploadId(uploadId));
+                                        return;
                                     }
-                                    Stream stream = new MemoryStream(bytesToStream);
-                                    UploadPartRequest uploadRequest = new UploadPartRequest()
-                                        .WithBucketName(Utilities.MyConfig.BucketKey)
-                                        .WithKey(relativePath)
-                                        .WithUploadId(uploadId)
-                                        .WithPartNumber(i)
-                                        .WithPartSize(partSize)
-                                        .WithFilePosition(filePosition)
-                                        .WithTimeout(1000000000);
-                                    uploadRequest.WithInputStream(stream);
-                                    // Upload part and add response to our list.
-                                    var response = _amazons3.UploadPart(uploadRequest);
-                                    WriteResponseToFile(relativePath, Utilities.MyConfig.BucketKey, uploadId, response);
-                                    uploadResponses.Add(response);
-                                    filePosition += partSize;
-                                    ModifySyncStatus("Uploaded", filePosition, contentLength, relativePath);
                                 }
                                 CompleteMultipartUploadRequest completeRequest = new CompleteMultipartUploadRequest()
                                         .WithBucketName(Utilities.MyConfig.BucketKey)
@@ -559,8 +568,18 @@ namespace VersaVaultSyncTool
                                 RemoveConfig(relativePath, completeUploadResponse.BucketName);
                                 //_service.AddObject(filePath, Utilities.MyConfig.BucketKey, relativePath);
                                 SetAcltoObject(relativePath);
-                                ProcessApplicationUpdates(appUpdateInfo);
+                                if (relativePath.ToLower().IndexOf("shared") == 0)
+                                {
+                                    var folders = relativePath.Split('\\');
+                                    if (folders.Length > 1)
+                                        ProcessApplicationUpdates(appUpdateInfo, true, folders[1]);
+                                    else if (folders.Length > 0)
+                                        ProcessApplicationUpdates(appUpdateInfo, true, folders[0]);
+                                }
+                                else
+                                    ProcessApplicationUpdates(appUpdateInfo, false, string.Empty);
                                 _processingFiles.Remove(filePath);
+                                UploadContentForSearch(filePath, relativePath);
                             }
                             catch (Exception)
                             {
@@ -569,12 +588,64 @@ namespace VersaVaultSyncTool
                                                                   .WithBucketName(Utilities.MyConfig.BucketKey)
                                                                   .WithKey(relativePath)
                                                                   .WithUploadId(uploadId));
+                                RemoveConfig(relativePath, Utilities.MyConfig.BucketKey);
+                                if (!_fileQueue.ContainsKey(filePath))
+                                    _fileQueue.Add(filePath, new FileQueue { Type = WatcherChangeTypes.Created, Name = Path.GetFileName(filePath) });
+                                else
+                                    _fileQueue.Add(filePath, new FileQueue { Type = WatcherChangeTypes.Created, Name = Path.GetFileName(filePath) });
                             }
                         }
                         catch (Exception)
                         {
                             return;
                         }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                return;
+            }
+        }
+
+        private void UploadContentForSearch(string filePath, string relativePath)
+        {
+            try
+            {
+                if (File.Exists(filePath) && !Utilities.IsFileUsedbyAnotherProcess(filePath))
+                {
+                    switch (Path.GetExtension(filePath))
+                    {
+                        case ".doc":
+                        case ".docx":
+                            {
+                                string url = Utilities.DevelopmentMode
+                                                 ? "http://localhost:3000"
+                                                 : "http://versavault.com";
+                                if (relativePath.ToLower().IndexOf("shared") == 0)
+                                {
+                                    var folders = relativePath.Split('\\');
+                                    relativePath = folders.Length > 1
+                                                       ? relativePath.Substring(relativePath.IndexOf(folders[0] + "\\" + folders[1])) : relativePath.Substring(relativePath.IndexOf(folders[0]));
+                                    url += "/api/get_object_id?shared=" + true + "&username" + (folders.Length > 1 ? folders[1] : folders[0]) + "&relativePath" + relativePath;
+                                }
+                                else
+                                    url += "/api/get_object_id?bucket_key=" + Utilities.MyConfig.BucketKey + "&key=" + relativePath;
+                                string result = GetResponse(url);
+                                if (!string.IsNullOrEmpty(result))
+                                {
+                                    var startInfo =
+                                        new ProcessStartInfo(
+                                            Path.Combine(Application.StartupPath, "VersaVaultSearchUtility.exe"),
+                                            filePath.Replace(" ", "%20") + " " + result)
+                                            {
+                                                UseShellExecute = true,
+                                                WindowStyle = ProcessWindowStyle.Hidden,
+                                            };
+                                    Process.Start(startInfo);
+                                }
+                                break;
+                            }
                     }
                 }
             }
@@ -691,18 +762,21 @@ namespace VersaVaultSyncTool
             try
             {
                 string relativePath = filePath.Replace(Utilities.Path + "\\", "");
-                var response = _amazons3.DeleteObject(new Amazon.S3.Model.DeleteObjectRequest { BucketName = Utilities.MyConfig.BucketKey, Key = relativePath });
-                if (!string.IsNullOrEmpty(response.RequestId))
+                if (relativePath.ToLower().IndexOf("shared") != 0)
                 {
-                    ProcessApplicationUpdates(new AppUpdateInfo
-                                                  {
-                                                      Key = relativePath.Replace("\\", "/"),
-                                                      LastModifiedTime = DateTime.Now,
-                                                      Status = UpdateStatus.Delete
-                                                  });
-                    RemoveConfig(relativePath, Utilities.MyConfig.BucketKey);
-                }
-                /*if (_service.ObjectExists(Utilities.MyConfig.BucketKey, relativePath))
+                    var response =
+                        _amazons3.DeleteObject(new Amazon.S3.Model.DeleteObjectRequest { BucketName = Utilities.MyConfig.BucketKey, Key = relativePath });
+                    if (!string.IsNullOrEmpty(response.RequestId))
+                    {
+                        ProcessApplicationUpdates(new AppUpdateInfo
+                                                      {
+                                                          Key = relativePath.Replace("\\", "/"),
+                                                          LastModifiedTime = DateTime.Now,
+                                                          Status = UpdateStatus.Delete
+                                                      }, false, string.Empty);
+                        RemoveConfig(relativePath, Utilities.MyConfig.BucketKey);
+                    }
+                    /*if (_service.ObjectExists(Utilities.MyConfig.BucketKey, relativePath))
                 {
                     _service.DeleteObject(Utilities.MyConfig.BucketKey, relativePath);
                     ProcessApplicationUpdates(new AppUpdateInfo
@@ -713,7 +787,8 @@ namespace VersaVaultSyncTool
                     });
                     //_applicationUpates.Enqueue(new AppUpdateInfo{Key = relativePath.Replace("\\", "/"),LastModifiedTime = DateTime.Now,Status = UpdateStatus.Delete});
                 }*/
-                Application.DoEvents();
+                    Application.DoEvents();
+                }
             }
             catch (Exception)
             {
@@ -723,76 +798,95 @@ namespace VersaVaultSyncTool
 
         private void Deletefolder(string relativePath)
         {
-            // Iteration through all the files in the folder
-            try
+            if (relativePath.ToLower().IndexOf("shared") != 0)
             {
-                foreach (var s3Object in _amazons3.ListObjects(new ListObjectsRequest { BucketName = Utilities.MyConfig.BucketKey, Prefix = relativePath }).S3Objects)
+                // Iteration through all the files in the folder
+                try
                 {
-                    try
+                    foreach (
+                        var s3Object in
+                            _amazons3.ListObjects(new ListObjectsRequest { BucketName = Utilities.MyConfig.BucketKey, Prefix = relativePath })
+                                .S3Objects)
                     {
-                        _amazons3.DeleteObject(new Amazon.S3.Model.DeleteObjectRequest { BucketName = Utilities.MyConfig.BucketKey, Key = s3Object.Key });
-                        DeleteObjectVersions(s3Object.Key);
-                    }
-                    catch (Exception)
-                    {
-                        continue;
-                    }
-                }
-                foreach (var resultEntry in _service.ListAllObjects(Utilities.MyConfig.BucketKey, relativePath))
-                {
-                    ObjectEntry entry;
-                    try
-                    {
-                        entry = (ObjectEntry)resultEntry;
                         try
                         {
-                            var removeobject = new DeleteObjectRequest(_service, Utilities.MyConfig.BucketKey, entry.Key);
-                            removeobject.GetResponse();
-                            DeleteObjectVersions(entry.Key);
+                            _amazons3.DeleteObject(new Amazon.S3.Model.DeleteObjectRequest { BucketName = Utilities.MyConfig.BucketKey, Key = s3Object.Key });
+                            DeleteObjectVersions(s3Object.Key);
+                        }
+                        catch (Exception)
+                        {
+                            continue;
+                        }
+                    }
+                    foreach (var resultEntry in _service.ListAllObjects(Utilities.MyConfig.BucketKey, relativePath))
+                    {
+                        ObjectEntry entry;
+                        try
+                        {
+                            entry = (ObjectEntry)resultEntry;
+                            try
+                            {
+                                var removeobject = new DeleteObjectRequest(_service, Utilities.MyConfig.BucketKey,
+                                                                           entry.Key);
+                                removeobject.GetResponse();
+                                DeleteObjectVersions(entry.Key);
+                            }
+                            catch (Exception)
+                            {
+                                try
+                                {
+                                    var removeobject = new DeleteObjectRequest(_service, Utilities.MyConfig.BucketKey,
+                                                                               entry.Name);
+                                    removeobject.GetResponse();
+                                    DeleteObjectVersions(entry.Name);
+                                }
+                                catch (Exception)
+                                {
+                                    continue;
+                                }
+                            }
                         }
                         catch (Exception)
                         {
                             try
                             {
-                                var removeobject = new DeleteObjectRequest(_service, Utilities.MyConfig.BucketKey, entry.Name);
-                                removeobject.GetResponse();
-                                DeleteObjectVersions(entry.Name);
+                                var prefix = (CommonPrefix)resultEntry;
+                                Deletefolder(prefix.Prefix);
                             }
-                            catch (Exception) { continue; }
+                            catch (Exception)
+                            {
+                                continue;
+                            }
                         }
-                    }
-                    catch (Exception)
-                    {
-                        try
-                        {
-                            var prefix = (CommonPrefix)resultEntry;
-                            Deletefolder(prefix.Prefix);
-                        }
-                        catch (Exception) { continue; }
                     }
                 }
-            }
-            catch (Exception)
-            {
-                // Todo
-                // need to hanlde something when error raises
-            }
-            finally
-            {
-                // deleting entire folder
-                ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = DateTime.Now, Status = UpdateStatus.Delete });
-                //_applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = DateTime.Now, Status = UpdateStatus.Delete });
-            }
-            // If the user deleted a folder, it will be an exception
-            try
-            {
-                //var attribute = File.GetAttributes(Path.Combine(Utilities.Path, relativePath));
-                var removeobject = new DeleteObjectRequest(_service, Utilities.MyConfig.BucketKey, relativePath);
-                removeobject.GetResponse();
-            }
-            catch (Exception)
-            {
-                return;
+                catch (Exception)
+                {
+                    // Todo
+                    // need to hanlde something when error raises
+                }
+                finally
+                {
+                    // deleting entire folder
+                    ProcessApplicationUpdates(new AppUpdateInfo
+                                                  {
+                                                      Key = relativePath.Replace("\\", "/"),
+                                                      LastModifiedTime = DateTime.Now,
+                                                      Status = UpdateStatus.Delete
+                                                  }, false, string.Empty);
+                    //_applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = DateTime.Now, Status = UpdateStatus.Delete });
+                }
+                // If the user deleted a folder, it will be an exception
+                try
+                {
+                    //var attribute = File.GetAttributes(Path.Combine(Utilities.Path, relativePath));
+                    var removeobject = new DeleteObjectRequest(_service, Utilities.MyConfig.BucketKey, relativePath);
+                    removeobject.GetResponse();
+                }
+                catch (Exception)
+                {
+                    return;
+                }
             }
         }
 
@@ -838,20 +932,25 @@ namespace VersaVaultSyncTool
                         {
                             if (s3Obj != null)
                             {
-                                string fullPath = Path.Combine(Utilities.Path, s3Obj.Key.Replace("/", "\\"));
+                                string fullPath = Path.Combine(s3Obj.Shared ? Utilities.SharedFolderPath + "\\" + s3Obj.Username : Utilities.Path, s3Obj.Key.Replace("/", "\\"));
+                                if (s3Obj.Shared)
+                                {
+                                    if (!Directory.Exists(Utilities.SharedFolderPath + "\\" + s3Obj.Username))
+                                        Directory.CreateDirectory(Utilities.SharedFolderPath + "\\" + s3Obj.Username);
+                                }
                                 if (s3Obj.Folder)
                                 {
                                     if (s3Obj.Status)
                                     {
                                         if (!Directory.Exists(fullPath))
                                         {
-                                            DownloadFolder(s3Obj);
+                                            DownloadFolder(s3Obj, fullPath);
                                         }
                                         else
                                         {
                                             try
                                             {
-                                                TimeSpan timeSpan = new DirectoryInfo(fullPath).LastWriteTime.ToUniversalTime().Subtract(s3Obj.LastModified);
+                                                var timeSpan = new DirectoryInfo(fullPath).LastWriteTime.ToUniversalTime().Subtract(s3Obj.LastModified);
                                                 var seconds = Math.Floor(timeSpan.TotalSeconds);
                                                 if (seconds != 0)
                                                 {
@@ -859,8 +958,14 @@ namespace VersaVaultSyncTool
                                                     {
                                                         string relativePath = fullPath.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
                                                         //_applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new DirectoryInfo(fullPath).LastWriteTime, Status = UpdateStatus.Update });
-                                                        DownloadFolder(s3Obj);
-                                                        ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new DirectoryInfo(fullPath).LastWriteTime, Status = UpdateStatus.Add });
+                                                        DownloadFolder(s3Obj, fullPath);
+                                                        if (relativePath.ToLower().IndexOf("shared") == 0)
+                                                        {
+                                                            var folders = relativePath.Split('\\');
+                                                            ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new DirectoryInfo(fullPath).LastWriteTime, Status = UpdateStatus.Add }, true, folders.Length > 1 ? folders[1] : folders[0]);
+                                                        }
+                                                        else
+                                                            ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new DirectoryInfo(fullPath).LastWriteTime, Status = UpdateStatus.Add }, false, string.Empty);
                                                     }
                                                     //else
                                                     //  Uploadfiles(fullPath); // need to figure it out how to do this case, we cannot upload the entire folder
@@ -906,7 +1011,13 @@ namespace VersaVaultSyncTool
                                                 _downloadObjects.Add(fullPath);
                                                 _service.GetObject(Utilities.MyConfig.BucketKey, s3Obj.Key, fullPath);
                                                 string relativePath = fullPath.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
-                                                ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPath).LastWriteTime, Status = UpdateStatus.Add });
+                                                if (relativePath.ToLower().IndexOf("shared") == 0)
+                                                {
+                                                    var folders = relativePath.Split('\\');
+                                                    ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new DirectoryInfo(fullPath).LastWriteTime, Status = UpdateStatus.Add }, true, folders.Length > 1 ? folders[1] : folders[0]);
+                                                }
+                                                else
+                                                    ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPath).LastWriteTime, Status = UpdateStatus.Add }, false, string.Empty);
                                                 //_applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPath).LastWriteTime, Status = UpdateStatus.Update });
                                             }
                                             catch (Exception)
@@ -920,7 +1031,7 @@ namespace VersaVaultSyncTool
                                         {
                                             try
                                             {
-                                                if (!IsFileUsedbyAnotherProcess(fullPath))
+                                                if (!Utilities.IsFileUsedbyAnotherProcess(fullPath))
                                                 {
                                                     TimeSpan timeSpan = new FileInfo(fullPath).LastWriteTime.ToUniversalTime().Subtract(s3Obj.LastModified);
                                                     var seconds = Math.Floor(timeSpan.TotalSeconds);
@@ -932,7 +1043,13 @@ namespace VersaVaultSyncTool
                                                             _downloadObjects.Add(fullPath);
                                                             _service.GetObject(Utilities.MyConfig.BucketKey, s3Obj.Key, fullPath);
                                                             string relativePath = fullPath.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
-                                                            ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPath).LastWriteTime, Status = UpdateStatus.Add });
+                                                            if (relativePath.ToLower().IndexOf("shared") == 0)
+                                                            {
+                                                                var folders = relativePath.Split('\\');
+                                                                ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new DirectoryInfo(fullPath).LastWriteTime, Status = UpdateStatus.Add }, true, folders.Length > 1 ? folders[1] : folders[0]);
+                                                            }
+                                                            else
+                                                                ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPath).LastWriteTime, Status = UpdateStatus.Add }, false, string.Empty);
                                                             //_applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPath).LastWriteTime, Status = UpdateStatus.Update });
                                                         }
                                                         else // Upload the latest to server
@@ -1018,37 +1135,73 @@ namespace VersaVaultSyncTool
             // folders
             foreach (string directory in Directory.GetDirectories(path))
             {
-                bool isFolderfound = false;
-                S3Object directoryObject = null;
-                foreach (S3Object s3Object in s3Objects)
+                string relativePath = directory.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
+                if (!string.IsNullOrEmpty(relativePath) && relativePath.ToLower().IndexOf("shared") != 0)
                 {
-                    string key = directory.Replace(Utilities.Path + "\\", "");
-                    if (s3Object != null && s3Object.Folder && s3Object.Key.Replace("/", "\\").ToLower().Trim() == key.Trim().ToLower())
+                    bool isFolderfound = false;
+                    S3Object directoryObject = null;
+                    foreach (S3Object s3Object in s3Objects)
                     {
-                        directoryObject = s3Object;
-                        isFolderfound = true;
-                        break;
+                        string key = directory.Replace(Utilities.Path + "\\", "");
+                        if (s3Object != null && s3Object.Folder && s3Object.Key.Replace("/", "\\").ToLower().Trim() == key.Trim().ToLower())
+                        {
+                            directoryObject = s3Object;
+                            isFolderfound = true;
+                            break;
+                        }
+                    }
+                    if (!isFolderfound)
+                        Uploadfiles(directory);
+                    else
+                    {
+                        string url = Utilities.DevelopmentMode ? "http://localhost:3000" : "http://versavault.com";
+                        url += "/api/child_files?bucket_key=" + Utilities.MyConfig.BucketKey + "&parent_uid=" + directoryObject.Uid + "&machine_key=" + Utilities.MyConfig.MachineKey + "&shared=" + false;
+                        string result = GetResponse(url);
+                        if (!string.IsNullOrEmpty(result))
+                        {
+                            var res = JsonConvert.DeserializeObject<s3_object>(result);
+                            UploadMissedFiles(res.S3Object, directory);
+                        }
                     }
                 }
-                if (!isFolderfound)
-                    Uploadfiles(directory);
                 else
                 {
-                    string url = Utilities.DevelopmentMode ? "http://localhost:3000" : "http://versavault.com";
-                    url += "/api/child_files?bucket_key=" + Utilities.MyConfig.BucketKey + "&parent_uid=" + directoryObject.Uid + "&machine_key=" + Utilities.MyConfig.MachineKey;
-                    string result = GetResponse(url);
-                    if (!string.IsNullOrEmpty(result))
+                    // If it shared
+                    bool isFolderfound = false;
+                    S3Object directoryObject = null;
+                    foreach (S3Object s3Object in s3Objects)
                     {
-                        var res = JsonConvert.DeserializeObject<s3_object>(result);
-                        UploadMissedFiles(res.S3Object, directory);
+                        if (s3Object != null && s3Object.Shared && s3Object.Folder)
+                        {
+                            string key = directory.Replace(Utilities.SharedFolderPath + "\\" + s3Object.Username, "");
+                            if (s3Object.Key.Replace("/", "\\").ToLower().Trim() == key.Trim().ToLower())
+                            {
+                                directoryObject = s3Object;
+                                isFolderfound = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!isFolderfound)
+                        Uploadfiles(directory);
+                    else
+                    {
+                        string url = Utilities.DevelopmentMode ? "http://localhost:3000" : "http://versavault.com";
+                        url += "/api/child_files?bucket_key=" + Utilities.MyConfig.BucketKey + "&parent_uid=" + directoryObject.Uid + "&machine_key=" + Utilities.MyConfig.MachineKey + "&shared=" + true;
+                        string result = GetResponse(url);
+                        if (!string.IsNullOrEmpty(result))
+                        {
+                            var res = JsonConvert.DeserializeObject<s3_object>(result);
+                            UploadMissedFiles(res.S3Object, directory);
+                        }
                     }
                 }
             }
         }
 
-        private void DownloadFolder(S3Object s3Obj)
+        private void DownloadFolder(S3Object s3Obj, string folderPath)
         {
-            string fullPath = Path.Combine(Utilities.Path, s3Obj.Key.Replace("/", "\\"));
+            string fullPath = Path.Combine(folderPath, s3Obj.Key.Replace("/", "\\"));
             try
             {
                 // need to import complete directory
@@ -1057,7 +1210,7 @@ namespace VersaVaultSyncTool
                     Directory.CreateDirectory(fullPath);
                 // get the folder structure from application database
                 string url = Utilities.DevelopmentMode ? "http://localhost:3000" : "http://versavault.com";
-                url += "/api/child_files?bucket_key=" + Utilities.MyConfig.BucketKey + "&parent_uid=" + s3Obj.Uid + "&machine_key=" + Utilities.MyConfig.MachineKey;
+                url += "/api/child_files?bucket_key=" + Utilities.MyConfig.BucketKey + "&parent_uid=" + s3Obj.Uid + "&machine_key=" + Utilities.MyConfig.MachineKey + "&shared=" + s3Obj.Shared;
                 string result = GetResponse(url);
                 if (!string.IsNullOrEmpty(result))
                 {
@@ -1066,12 +1219,12 @@ namespace VersaVaultSyncTool
                     {
                         if (s3ObjSub != null)
                         {
-                            string fullPathSub = Path.Combine(Utilities.Path, s3ObjSub.Key.Replace("/", "\\"));
+                            string fullPathSub = Path.Combine(folderPath, s3ObjSub.Key.Replace("/", "\\"));
                             if (s3ObjSub.Folder)
                             {
                                 if (!Directory.Exists(fullPathSub))
                                 {
-                                    DownloadFolder(s3ObjSub);
+                                    DownloadFolder(s3ObjSub, fullPathSub);
                                 }
                                 else
                                 {
@@ -1084,9 +1237,15 @@ namespace VersaVaultSyncTool
                                             if (seconds < 0)
                                             {
                                                 _downloadObjects.Add(fullPathSub);
-                                                DownloadFolder(s3ObjSub);
+                                                DownloadFolder(s3ObjSub, fullPathSub);
                                                 string relativePath = fullPathSub.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
-                                                ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Add });
+                                                if (s3ObjSub.Shared)
+                                                {
+                                                    var folders = relativePath.Split('\\');
+                                                    ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Add }, s3ObjSub.Shared, folders.Length > 1 ? folders[1] : folders[0]);
+                                                }
+                                                else
+                                                    ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Add }, false, string.Empty);
                                                 //_applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Update });
                                             }
                                             //else
@@ -1108,14 +1267,20 @@ namespace VersaVaultSyncTool
                                     _downloadObjects.Add(fullPathSub);
                                     _service.GetObject(Utilities.MyConfig.BucketKey, s3ObjSub.Key, fullPathSub);
                                     string relativePath = fullPathSub.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
-                                    ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Add });
+                                    if (s3ObjSub.Shared)
+                                    {
+                                        var folders = relativePath.Split('\\');
+                                        ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Add }, s3ObjSub.Shared, folders.Length > 1 ? folders[1] : folders[0]);
+                                    }
+                                    else
+                                        ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Add }, false, string.Empty);
                                     //_applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Update });
                                 }
                                 else
                                 {
                                     try
                                     {
-                                        if (!IsFileUsedbyAnotherProcess(fullPathSub))
+                                        if (!Utilities.IsFileUsedbyAnotherProcess(fullPathSub))
                                         {
                                             TimeSpan timeSpan = new FileInfo(fullPathSub).LastWriteTime.ToUniversalTime().Subtract(s3ObjSub.LastModified);
                                             var seconds = Math.Floor(timeSpan.TotalSeconds);
@@ -1126,7 +1291,13 @@ namespace VersaVaultSyncTool
                                                     _downloadObjects.Add(fullPathSub);
                                                     _service.GetObject(Utilities.MyConfig.BucketKey, s3ObjSub.Key, fullPathSub);
                                                     string relativePath = fullPathSub.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
-                                                    ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Add });
+                                                    if (s3ObjSub.Shared)
+                                                    {
+                                                        var folders = relativePath.Split('\\');
+                                                        ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Add }, s3ObjSub.Shared, folders.Length > 1 ? folders[1] : folders[0]);
+                                                    }
+                                                    else
+                                                        ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Add }, false, string.Empty);
                                                     //_applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPathSub).LastWriteTime, Status = UpdateStatus.Update });
                                                 }
                                                 else
@@ -1153,14 +1324,24 @@ namespace VersaVaultSyncTool
             }
             finally
             {
-                ProcessApplicationUpdates(new AppUpdateInfo { Key = s3Obj.Key, LastModifiedTime = new DirectoryInfo(fullPath).LastWriteTime, Status = UpdateStatus.Add });
+                string relativePath = fullPath.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
+                if (relativePath.ToLower().IndexOf("shared") == 0)
+                {
+                    var folders = relativePath.Split('\\');
+                    ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPath).LastWriteTime, Status = UpdateStatus.Add }, true, folders.Length > 1 ? folders[1] : folders[0]);
+                }
+                else
+                    ProcessApplicationUpdates(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPath).LastWriteTime, Status = UpdateStatus.Add }, false, string.Empty);
                 //_applicationUpates.Enqueue(new AppUpdateInfo { Key = s3Obj.Key, LastModifiedTime = new DirectoryInfo(fullPath).LastWriteTime, Status = UpdateStatus.Update });
             }
         }
 
         private void ModifySyncStatus(string status, long bytesTransferred, long bytesTotal, string key)
         {
-            _syncStatus.Enqueue(status + " - " + key.Substring(0, 10) + "... " + Math.Round((Convert.ToDouble(bytesTransferred) / Convert.ToDouble(bytesTotal)) * 100, 0) + @"%");
+            if (key.Length > 10)
+                _syncStatus.Enqueue(status + " - " + key.Substring(0, 10) + "... " + Math.Round((Convert.ToDouble(bytesTransferred) / Convert.ToDouble(bytesTotal)) * 100, 0) + @"%");
+            else
+                _syncStatus.Enqueue(status + " - " + key + "... " + Math.Round((Convert.ToDouble(bytesTransferred) / Convert.ToDouble(bytesTotal)) * 100, 0) + @"%");
             Application.DoEvents();
             return;
             //if (bytesTransferred != 0)
@@ -1253,7 +1434,7 @@ namespace VersaVaultSyncTool
             if (_syncStatus.Count == 0 && _fileQueue.Count == 0) //&& _applicationUpates.Count == 0)
                 timer_status_update.Interval = 1000;
             else
-                timer_status_update.Interval = 500;
+                timer_status_update.Interval = 50;
         }
 
         private void Hidenotification()
@@ -1296,7 +1477,7 @@ namespace VersaVaultSyncTool
             _isThreadStarted = false;
         }
 
-        private void ProcessApplicationUpdates(AppUpdateInfo appUpdateInfo)
+        private void ProcessApplicationUpdates(AppUpdateInfo appUpdateInfo, bool IsShared, string Username)
         {
             try
             {
@@ -1304,32 +1485,56 @@ namespace VersaVaultSyncTool
                 //{
                 //var appUpdateInfo = (AppUpdateInfo)_applicationUpates.Dequeue();
                 string url = Utilities.DevelopmentMode ? "http://localhost:3000" : "http://versavault.com";
-                switch (appUpdateInfo.Status)
+                if (!IsShared)
                 {
-                    case UpdateStatus.Add:
-                        {
-                            url += "/api/add_files?bucket_key=" + Utilities.MyConfig.BucketKey + "&key=" +
-                                   appUpdateInfo.Key + "&last_modified=" +
-                                   appUpdateInfo.LastModifiedTime.ToUniversalTime().ToString(
-                                       "yyyy-MM-dd HH:mm:ss tt") + "&machine_key=" +
-                                   Utilities.MyConfig.MachineKey;
-                            break;
-                        }
-                    case UpdateStatus.Update:
-                        {
-                            url += "/api/update_files?bucket_key=" + Utilities.MyConfig.BucketKey + "&key=" +
-                                   appUpdateInfo.Key + "&last_modified=" +
-                                   appUpdateInfo.LastModifiedTime.ToUniversalTime().ToString(
-                                       "yyyy-MM-dd HH:mm:ss tt") + "&machine_key=" +
-                                   Utilities.MyConfig.MachineKey;
-                            break;
-                        }
-                    case UpdateStatus.Delete:
-                        {
-                            url += "/api/delete_files?bucket_key=" + Utilities.MyConfig.BucketKey + "&key=" +
-                                   appUpdateInfo.Key + "&machine_key=" + Utilities.MyConfig.MachineKey;
-                            break;
-                        }
+                    switch (appUpdateInfo.Status)
+                    {
+                        case UpdateStatus.Add:
+                            {
+                                url += "/api/add_files?bucket_key=" + Utilities.MyConfig.BucketKey + "&key=" +
+                                       appUpdateInfo.Key + "&last_modified=" +
+                                       appUpdateInfo.LastModifiedTime.ToUniversalTime().ToString(
+                                           "yyyy-MM-dd HH:mm:ss tt") + "&machine_key=" +
+                                       Utilities.MyConfig.MachineKey;
+                                break;
+                            }
+                        case UpdateStatus.Update:
+                            {
+                                url += "/api/update_files?bucket_key=" + Utilities.MyConfig.BucketKey + "&key=" +
+                                       appUpdateInfo.Key + "&last_modified=" +
+                                       appUpdateInfo.LastModifiedTime.ToUniversalTime().ToString(
+                                           "yyyy-MM-dd HH:mm:ss tt") + "&machine_key=" +
+                                       Utilities.MyConfig.MachineKey;
+                                break;
+                            }
+                        case UpdateStatus.Delete:
+                            {
+                                url += "/api/delete_files?bucket_key=" + Utilities.MyConfig.BucketKey + "&key=" +
+                                       appUpdateInfo.Key + "&machine_key=" + Utilities.MyConfig.MachineKey;
+                                break;
+                            }
+                    }
+                }
+                else
+                {
+                    switch (appUpdateInfo.Status)
+                    {
+                        case UpdateStatus.Add:
+                            {
+                                url += "/api/add_files?shared=" + IsShared + "&key=" + appUpdateInfo.Key + "&last_modified=" + appUpdateInfo.LastModifiedTime.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss tt") + "&username=" + Username;
+                                break;
+                            }
+                        case UpdateStatus.Update:
+                            {
+                                url += "/api/update_files?shared=" + IsShared + "&key=" + appUpdateInfo.Key + "&last_modified=" + appUpdateInfo.LastModifiedTime.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss tt") + "&username=" + Username;
+                                break;
+                            }
+                        case UpdateStatus.Delete:
+                            {
+                                url += "/api/delete_files?shared=" + IsShared + "&key=" + appUpdateInfo.Key + "&last_modified=" + appUpdateInfo.LastModifiedTime.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss tt") + "&username=" + Username;
+                                break;
+                            }
+                    }
                 }
                 GetResponse(url);
                 //}
@@ -1357,16 +1562,17 @@ namespace VersaVaultSyncTool
                                 {
                                     if (attribute != FileAttributes.Directory && !_processingFiles.Contains(fullPath))
                                     {
-                                        if (!IsFileUsedbyAnotherProcess(fullPath) && new FileInfo(fullPath).Length != 0)
+                                        if (!Utilities.IsFileUsedbyAnotherProcess(fullPath) && new FileInfo(fullPath).Length != 0)
                                         {
                                             // get the file last modified from database
                                             string relativePath = fullPath.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
                                             string url = Utilities.DevelopmentMode
                                                              ? "http://localhost:3000"
                                                              : "http://versavault.com";
-                                            url += "/api/get_object_status?bucket_key=" +
-                                                   Utilities.MyConfig.BucketKey + "&key=" + relativePath +
-                                                   "&machine_key=" + Utilities.MyConfig.MachineKey;
+                                            if (relativePath.IndexOf("shared", StringComparison.OrdinalIgnoreCase) == 0)
+                                                url += "/api/get_object_status?bucket_key=" + Utilities.MyConfig.BucketKey + "&key=" + relativePath + "&machine_key=" + Utilities.MyConfig.MachineKey + "&shared=" + true;
+                                            else
+                                                url += "/api/get_object_status?bucket_key=" + Utilities.MyConfig.BucketKey + "&key=" + relativePath + "&machine_key=" + Utilities.MyConfig.MachineKey + "&shared=" + false;
                                             string result = GetResponse(url);
                                             if (!string.IsNullOrEmpty(result))
                                             {
@@ -1405,7 +1611,7 @@ namespace VersaVaultSyncTool
                                                 {
                                                     try
                                                     {
-                                                        if (!IsFileUsedbyAnotherProcess(fullPath) && new FileInfo(fullPath).Length != 0)
+                                                        if (!Utilities.IsFileUsedbyAnotherProcess(fullPath) && new FileInfo(fullPath).Length != 0)
                                                         {
                                                             //relativePath = fullPath.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
                                                             //_applicationUpates.Enqueue(new AppUpdateInfo { Key = relativePath.Replace("\\", "/"), LastModifiedTime = new FileInfo(fullPath).LastWriteTime, Status = UpdateStatus.Update });
@@ -1462,18 +1668,15 @@ namespace VersaVaultSyncTool
                                     {
                                         if (!_processingFiles.Contains(fullPath))
                                         {
-                                            if (!IsFileUsedbyAnotherProcess(fullPath) &&
-                                                new FileInfo(fullPath).Length != 0)
+                                            if (!Utilities.IsFileUsedbyAnotherProcess(fullPath) && new FileInfo(fullPath).Length != 0)
                                             {
                                                 // get the file last modified from database
-                                                string relativePath =
-                                                    fullPath.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
-                                                string url = Utilities.DevelopmentMode
-                                                                 ? "http://localhost:3000"
-                                                                 : "http://versavault.com";
-                                                url += "/api/get_object_status?bucket_key=" +
-                                                       Utilities.MyConfig.BucketKey + "&key=" + relativePath +
-                                                       "&machine_key=" + Utilities.MyConfig.MachineKey;
+                                                string relativePath = fullPath.Replace(Utilities.Path + "\\", "").Replace("\\", "/");
+                                                string url = Utilities.DevelopmentMode ? "http://localhost:3000" : "http://versavault.com";
+                                                if (relativePath.IndexOf("shared", StringComparison.OrdinalIgnoreCase) == 0)
+                                                    url += "/api/get_object_status?bucket_key=" + Utilities.MyConfig.BucketKey + "&key=" + relativePath + "&machine_key=" + Utilities.MyConfig.MachineKey + "&shared=" + true;
+                                                else
+                                                    url += "/api/get_object_status?bucket_key=" + Utilities.MyConfig.BucketKey + "&key=" + relativePath + "&machine_key=" + Utilities.MyConfig.MachineKey + "&shared=" + false;
                                                 string result = GetResponse(url);
                                                 if (!string.IsNullOrEmpty(result))
                                                 {
@@ -1484,9 +1687,7 @@ namespace VersaVaultSyncTool
                                                         {
                                                             if (s3ObjSub != null)
                                                             {
-                                                                string fullPathSub = Path.Combine(Utilities.Path,
-                                                                                                  s3ObjSub.Key.Replace(
-                                                                                                      "/", "\\"));
+                                                                string fullPathSub = Path.Combine(Utilities.Path, s3ObjSub.Key.Replace("/", "\\"));
                                                                 if (!s3ObjSub.Folder)
                                                                 {
                                                                     try
@@ -1559,7 +1760,7 @@ namespace VersaVaultSyncTool
                             {
                                 if (attribute != FileAttributes.Directory)
                                 {
-                                    if (!IsFileUsedbyAnotherProcess(fullPath))
+                                    if (!Utilities.IsFileUsedbyAnotherProcess(fullPath))
                                     {
                                         if (new FileInfo(fullPath).Length != 0)
                                         {
@@ -1727,7 +1928,7 @@ namespace VersaVaultSyncTool
 
         private static void WaitUntilFileBusy(string filePath)
         {
-            while (IsFileUsedbyAnotherProcess(filePath))
+            while (Utilities.IsFileUsedbyAnotherProcess(filePath))
             {
                 Application.DoEvents();
                 Thread.Sleep(3000);
@@ -1736,7 +1937,6 @@ namespace VersaVaultSyncTool
         }
 
         // Config file methods
-
         private static void RemoveConfig(string relativePath, string bucketkey)
         {
             try
@@ -1796,10 +1996,10 @@ namespace VersaVaultSyncTool
                                 uploadPartResponses.AddRange(objectInfo.UploadPartResponses);
                                 return new LastUploadedPartDetail
                                            {
-                                               LastPartNumber =
-                                                   objectInfo.UploadPartResponses[
-                                                       objectInfo.UploadPartResponses.Count - 1].PartNumber,
-                                               UploadId = objectInfo.UploadId
+                                               LastPartNumber = objectInfo.UploadPartResponses[objectInfo.UploadPartResponses.Count - 1].PartNumber,
+                                               UploadId = objectInfo.UploadId,
+                                               LastModified = objectInfo.LastModified,
+                                               BucketKey = objectInfo.Bucketkey
                                            };
                             }
                         }
@@ -1809,7 +2009,7 @@ namespace VersaVaultSyncTool
             return new LastUploadedPartDetail { LastPartNumber = 0, UploadId = string.Empty };
         }
 
-        private static void WriteResponseToFile(string relativePath, string bucketkey, string uploadId, UploadPartResponse uploadPartResponse)
+        private static void WriteResponseToFile(string relativePath, string bucketkey, string uploadId, DateTime lastModified, UploadPartResponse uploadPartResponse)
         {
             try
             {
@@ -1844,6 +2044,7 @@ namespace VersaVaultSyncTool
                                               Bucketkey = bucketkey,
                                               RelativePath = relativePath,
                                               UploadId = uploadId,
+                                              LastModified = lastModified
                                           };
                         objInfo.UploadPartResponses.Add(uploadPartResponse);
                         objs.Add(objInfo);
@@ -1892,6 +2093,8 @@ namespace VersaVaultSyncTool
     {
         public string UploadId;
         public int LastPartNumber;
+        public DateTime LastModified;
+        public string BucketKey;
     }
 
     enum UpdateStatus

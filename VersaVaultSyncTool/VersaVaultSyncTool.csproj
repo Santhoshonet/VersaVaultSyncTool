@@ -85,7 +85,7 @@
     <Reference Include="System.Xml" />
     <Reference Include="VersaVaultLibrary, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\VersaVaultLibrary\bin\Debug\VersaVaultLibrary.dll</HintPath>
+      <HintPath>..\VersaVaultLibrary\bin\VersaVaultLibrary.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

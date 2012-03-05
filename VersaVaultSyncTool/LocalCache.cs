@@ -10,6 +10,7 @@ namespace VersaVaultSyncTool
         public ObjectInfo()
         {
             UploadPartResponses = new List<UploadPartResponse>();
+            LastModified = DateTime.MinValue;
         }
 
         public string RelativePath { get; set; }
@@ -17,6 +18,8 @@ namespace VersaVaultSyncTool
         public string Bucketkey { get; set; }
 
         public string UploadId { get; set; }
+
+        public DateTime LastModified { get; set; }
 
         public List<UploadPartResponse> UploadPartResponses { get; set; }
     }

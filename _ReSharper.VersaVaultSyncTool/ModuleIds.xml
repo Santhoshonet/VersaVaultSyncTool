@@ -4,5 +4,6 @@
   <Module PersistentId="8F23007D-7B57-4A2C-89AF-CB313AE1E4DF" ModuleId="Uninstaller" />
   <Module PersistentId="C0D6AEF9-B335-426D-AEEC-33855A4F5F21" ModuleId="VersaVaultUpdater" />
   <Module PersistentId="7BF5031B-58F0-4B5F-8696-2B2C6091506E" ModuleId="VersaVaultLibrary" />
-  <Module PersistentId="4683FF35-0E67-44BE-95C0-40ABAE3D0EB4" ModuleId="Multi_Upload_Test_App" />
+  <Module PersistentId="AF42338C-3418-4CC5-BC07-1C9880B05D1B" ModuleId="VersaVaultSearchUtility" />
+  <Module PersistentId="DC5A39AC-26C2-42AC-9C82-4A55DF3761A5" ModuleId="Testconsole" />
 </Modules>

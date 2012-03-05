@@ -37,7 +37,7 @@ namespace VersaVaultUpdater
                     File.Move(Path.Combine(Application.StartupPath, "VersaVaultSyncTool.exe"),
                               Path.Combine(Application.StartupPath, "VersaVaultSyncTool_old.exe"));
                     var amazons3 = AWSClientFactory.CreateAmazonS3Client(Utilities.AwsAccessKey, Utilities.AwsSecretKey, new AmazonS3Config { CommunicationProtocol = Amazon.S3.Model.Protocol.HTTP });
-                    var listVersionRequest = new Amazon.S3.Model.ListVersionsRequest { BucketName = "VersaVault", Prefix = "VersaVaultSyncTool.exe" };
+                    var listVersionRequest = new Amazon.S3.Model.ListVersionsRequest { BucketName = Utilities.AppRootBucketName, Prefix = "VersaVaultSyncTool.exe" };
                     foreach (var s3ObjectVersion in amazons3.ListVersions(listVersionRequest).Versions)
                     {
                         if (s3ObjectVersion.IsLatest)
@@ -50,7 +50,7 @@ namespace VersaVaultUpdater
                                     LblStatus.Text = "Started downloading update.";
                                     ShowForm();
                                     service.GetObjectProgress += ServiceGetObjectProgress;
-                                    service.GetObject("VersaVault", s3ObjectVersion.Key, Path.Combine(Application.StartupPath, "VersaVaultSyncTool.exe"));
+                                    service.GetObject(Utilities.AppRootBucketName, s3ObjectVersion.Key, Path.Combine(Application.StartupPath, "VersaVaultSyncTool.exe"));
                                     LblStatus.Text = "Updating VersaVault";
                                     HideForm();
                                     if (File.Exists(Path.Combine(Application.StartupPath, "VersaVaultSyncTool.exe")))
@@ -63,7 +63,7 @@ namespace VersaVaultUpdater
                             else
                             {
                                 // enable bucker versioning
-                                var setBucketVersioning = new Amazon.S3.Model.SetBucketVersioningRequest { BucketName = "VersaVault", VersioningConfig = new Amazon.S3.Model.S3BucketVersioningConfig { Status = "Enabled" } };
+                                var setBucketVersioning = new Amazon.S3.Model.SetBucketVersioningRequest { BucketName = Utilities.AppRootBucketName, VersioningConfig = new Amazon.S3.Model.S3BucketVersioningConfig { Status = "Enabled" } };
                                 amazons3.SetBucketVersioning(setBucketVersioning);
                             }
                             break;

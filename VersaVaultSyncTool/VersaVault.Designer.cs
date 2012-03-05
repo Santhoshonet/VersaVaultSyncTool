@@ -79,8 +79,8 @@ namespace VersaVaultSyncTool
             this.VersaVaultNotifications.Icon = ((System.Drawing.Icon)(resources.GetObject("VersaVaultNotifications.Icon")));
             this.VersaVaultNotifications.Text = "VersaVault";
             this.VersaVaultNotifications.Visible = true;
-            this.VersaVaultNotifications.Click += new System.EventHandler(this.VersaVaultNotificationsClick);
-            this.VersaVaultNotifications.DoubleClick += new System.EventHandler(this.VersaVaultNotificationsDoubleClick);
+            this.VersaVaultNotifications.Click += new System.EventHandler(VersaVaultNotificationsClick);
+            this.VersaVaultNotifications.DoubleClick += new System.EventHandler(VersaVaultNotificationsDoubleClick);
             //
             // contextMenuStrip
             //
@@ -316,7 +316,7 @@ namespace VersaVaultSyncTool
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "VersaVault";
             this.Load += new System.EventHandler(this.VersaVaultLoad);
-            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.VersaVaultFormClosed);
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(VersaVaultFormClosed);
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.VersaVaultFormClosing);
             this.contextMenuStrip.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this._watchFolder)).EndInit();

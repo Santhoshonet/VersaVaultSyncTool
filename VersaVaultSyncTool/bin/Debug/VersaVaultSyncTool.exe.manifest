@@ -89,26 +89,26 @@
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="VersaVaultLibrary.dll" size="7168">
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="VersaVaultLibrary.dll" size="8704">
       <assemblyIdentity name="VersaVaultLibrary" version="1.0.0.0" language="neutral" processorArchitecture="msil" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" />
-        <dsig:DigestValue>82BGbmcexRsBafy/Qv0/Hk4QYZc=</dsig:DigestValue>
+        <dsig:DigestValue>mcY3+4OJ02PQ6YPiI6zSve0v/no=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="VersaVaultSyncTool.exe" size="660480">
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="VersaVaultSyncTool.exe" size="666624">
       <assemblyIdentity name="VersaVaultSyncTool" version="1.0.0.0" language="neutral" processorArchitecture="msil" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" />
-        <dsig:DigestValue>0LOZm+rRIdUcJz42FE+/qru6vtE=</dsig:DigestValue>
+        <dsig:DigestValue>ey5JHIS7amuZ4eGStc/4YQMQe0k=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>

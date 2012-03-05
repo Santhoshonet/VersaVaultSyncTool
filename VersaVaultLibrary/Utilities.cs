@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Configuration;
+using System.IO;
+using System.Net;
+using System.Net.Cache;
 using Microsoft.Win32;
 
 namespace VersaVaultLibrary
@@ -8,10 +11,26 @@ namespace VersaVaultLibrary
     {
         public static string AwsAccessKey = "AKIAIW36YM46YELZCT3A";
         public static string AwsSecretKey = "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";
-        public static bool DevelopmentMode = false;
-        public static string Path = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "VersaVault");
-        public static string AppPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VersaVault");
+        public static bool DevelopmentMode = true;
+
+        public static string AppRootBucketName
+        {
+            get
+            {
+                if (DevelopmentMode)
+                    return "VersaVault_Demo";
+                return "VersaVault";
+            }
+        }
+
+        public static string Path = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), AppRootBucketName);
+
+        public static string AppPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), AppRootBucketName);
+
         public static string ConfigPath = System.IO.Path.Combine(AppPath, "VersaVault.config");
+
+        public static string SharedFolderPath = System.IO.Path.Combine(Path, "Shared");
+
         public static Myconfiguration MyConfig = new Myconfiguration();
 
         public static void Startup(bool add, string applicationExecutablePath)
@@ -23,10 +42,10 @@ namespace VersaVaultLibrary
                 if (key != null)
                 {
                     if (add)
-                        key.SetValue("VersaVault", "\"" + applicationExecutablePath + "\"");
+                        key.SetValue(AppRootBucketName, "\"" + applicationExecutablePath + "\"");
                     else
                     {
-                        key.DeleteValue("VersaVault");
+                        key.DeleteValue(AppRootBucketName);
                     }
                     key.Close();
                 }
@@ -35,6 +54,69 @@ namespace VersaVaultLibrary
             {
                 return;
             }
+        }
+
+        public static bool IsFileUsedbyAnotherProcess(string filename)
+        {
+            // Its not a way elegant way, need to find out the better  code
+            try
+            {
+                if (File.Exists(filename))
+                {
+                    using (FileStream filestream = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.None))
+                    {
+                        filestream.Close();
+                        filestream.Dispose();
+                    }
+                    return false;
+                }
+                return false;
+            }
+            catch (IOException)
+            {
+                return true;
+            }
+        }
+
+        public static string GetResponse(string strUrl)
+        {
+            string strReturn;
+            HttpWebRequest objRequest;
+            IAsyncResult ar;
+            HttpWebResponse objResponse = null;
+            StreamReader objs;
+            try
+            {
+                objRequest = (HttpWebRequest)WebRequest.Create(strUrl);
+                var policy = new HttpRequestCachePolicy(HttpRequestCacheLevel.BypassCache);
+                objRequest.CachePolicy = policy;
+                ar = objRequest.BeginGetResponse(GetScrapingResponse, objRequest);
+                //// Wait for request to complete
+                ar.AsyncWaitHandle.WaitOne(1000 * 60, true);
+                if (objRequest.HaveResponse == false)
+                {
+                    return string.Empty;
+                }
+                objResponse = (HttpWebResponse)objRequest.EndGetResponse(ar);
+                // ReSharper disable AssignNullToNotNullAttribute
+                objs = new StreamReader(objResponse.GetResponseStream());
+                // ReSharper restore AssignNullToNotNullAttribute
+                strReturn = objs.ReadToEnd();
+            }
+            catch (Exception)
+            {
+                return string.Empty;
+            }
+            finally
+            {
+                if (objResponse != null)
+                    objResponse.Close();
+            }
+            return strReturn;
+        }
+
+        protected static void GetScrapingResponse(IAsyncResult result)
+        {
         }
     }
 
@@ -86,6 +168,14 @@ namespace VersaVaultLibrary
         {
             get { return (DateTime)this["LastUpdateDate"]; }
             set { this["LastUpdateDate"] = value; }
+        }
+
+        [UserScopedSetting]
+        [DefaultSettingValueAttribute("")]
+        public string InstallerVersionId
+        {
+            get { return (string)this["InstallerVersionId"]; }
+            set { this["InstallerVersionId"] = value; }
         }
     }
 

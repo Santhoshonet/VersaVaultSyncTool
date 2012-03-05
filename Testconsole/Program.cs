@@ -1,4 +1,8 @@
 ﻿using System;
+using System.IO;
+using ICSharpCode.SharpZipLib.Zip;
+using LitS3;
+using VersaVaultLibrary;
 
 namespace Testconsole
 {
@@ -6,30 +10,67 @@ namespace Testconsole
     {
         static void Main()
         {
-            foreach (var systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+            var service = new S3Service { AccessKeyID = Utilities.AwsAccessKey, SecretAccessKey = Utilities.AwsSecretKey };
+            service.GetObject(Utilities.AppRootBucketName, "FacebookSampleMVC2Appv3.zip", @"C:\Users\Santhosh\Desktop\Facebook.zip");
+            UnZipFile(@"C:\Users\Santhosh\Desktop\Facebook.zip");
+        }
+
+        public static bool UnZipFile(string inputPathOfZipFile)
+        {
+            bool ret = true;
+            try
             {
-                if (systemTimeZone.Id.ToLower() == "utc")
+                if (File.Exists(inputPathOfZipFile))
                 {
-                    DateTime localtime = DateTime.Now.ToUniversalTime();
-                    TimeZoneInfo usTimeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(systemTimeZone.Id);
-                    var dt = TimeZoneInfo.ConvertTimeToUtc(localtime, usTimeZoneInfo);
-                    break;
+                    string baseDirectory = Path.GetDirectoryName(inputPathOfZipFile);
+
+                    using (var zipStream = new ZipInputStream(File.OpenRead(inputPathOfZipFile)))
+                    {
+                        ZipEntry theEntry;
+                        while ((theEntry = zipStream.GetNextEntry()) != null)
+                        {
+                            if (theEntry.IsFile)
+                            {
+                                if (theEntry.Name != "")
+                                {
+                                    string strNewFile = @"" + baseDirectory + @"\" + theEntry.Name;
+                                    if (File.Exists(strNewFile))
+                                    {
+                                        continue;
+                                    }
+                                    using (FileStream streamWriter = File.Create(strNewFile))
+                                    {
+                                        var data = new byte[2048];
+                                        while (true)
+                                        {
+                                            int size = zipStream.Read(data, 0, data.Length);
+                                            if (size > 0)
+                                                streamWriter.Write(data, 0, size);
+                                            else
+                                                break;
+                                        }
+                                        streamWriter.Close();
+                                    }
+                                }
+                            }
+                            else if (theEntry.IsDirectory)
+                            {
+                                string strNewDirectory = @"" + baseDirectory + @"\" + theEntry.Name;
+                                if (!Directory.Exists(strNewDirectory))
+                                {
+                                    Directory.CreateDirectory(strNewDirectory);
+                                }
+                            }
+                        }
+                        zipStream.Close();
+                    }
                 }
-                //Console.WriteLine(systemTimeZone.Id);
             }
-            //Console.Read();
-            return;
-            //DateTime localtime = DateTime.Now;
-            //string uscanadazone = "US & Canada";
-            //TimeZoneInfo usTimeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(uscanadazone);
-            //var dt = TimeZoneInfo.ConvertTimeToUtc(localtime, usTimeZoneInfo);
-            return;
-            string dateStr = "Sat, 26 Nov 2011 12:59:00 -06:00";
-            DateTime convertedDate = DateTime.SpecifyKind(DateTime.Parse(dateStr), DateTimeKind.Utc);
-            convertedDate.ToUniversalTime();
-            return;
-            var mytime = convertedDate.ToLocalTime();
-            Console.WriteLine(mytime.ToString("R"));
+            catch (Exception)
+            {
+                ret = false;
+            }
+            return ret;
         }
     }
 }
