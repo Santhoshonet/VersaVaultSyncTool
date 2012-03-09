@@ -18,7 +18,9 @@ namespace VersaVaultSyncTool
 
         public bool Shared { get; set; }
 
-        public String Username { get; set; }
+        public string Username { get; set; }
+
+        public string BucketKey { get; set; }
     }
 
     public class s3_object

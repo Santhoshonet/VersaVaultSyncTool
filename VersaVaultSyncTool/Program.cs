@@ -135,6 +135,8 @@ namespace VersaVaultSyncTool
                                 service.GetObjectProgress += ServiceGetObjectProgress;
                                 service.GetObject(Utilities.AppRootBucketName, s3ObjectVersion.Key, Path.Combine(Path.GetTempPath(), "VersaVaultSyncTool_32Bit.exe"));
                                 _notification.SetMessage("Updating VersaVault");
+                                Utilities.MyConfig.InstallerVersionId = s3ObjectVersion.VersionId;
+                                Utilities.MyConfig.Save();
                                 var startInfo = new ProcessStartInfo(Path.Combine(Path.GetTempPath(), "VersaVaultSyncTool_32Bit.exe")) { Verb = "runas" };
                                 Process.Start(startInfo);
                                 Application.Exit();
@@ -155,6 +157,8 @@ namespace VersaVaultSyncTool
                                 if (!string.IsNullOrEmpty(Utilities.MyConfig.VersionId) && Utilities.MyConfig.VersionId != s3ObjectVersion.VersionId)
                                 {
                                     _notification.Dispose();
+                                    Utilities.MyConfig.VersionId = s3ObjectVersion.VersionId;
+                                    Utilities.MyConfig.Save();
                                     var startInfo = new ProcessStartInfo(Path.Combine(Application.StartupPath, "VersaVaultUpdater.exe"), s3ObjectVersion.VersionId + " " + "update") { Verb = "runas" };
                                     Process.Start(startInfo);
                                     Application.Exit();
